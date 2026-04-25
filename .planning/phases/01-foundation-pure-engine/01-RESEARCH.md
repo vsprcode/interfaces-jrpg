@@ -1962,25 +1962,25 @@ Three Phase 1 checks cannot be automated and require human verification:
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should Phase 1 include a placeholder `src/data/` for all 3 characters and all 4 enemies, or just DEADZONE + Probe?**
    - What we know: ENGINE-01 requires the *types* to exist; nothing requires all data.
    - What's unclear: whether Phase 2 wants pre-existing stubs.
-   - Recommendation: include only DEADZONE + CASTING_PROBE_MK1 in Phase 1 (`src/data/`). Phase 2/3/4 add the rest as encounter-specific files.
+   - RESOLVED: include only DEADZONE + CASTING_PROBE_MK1 in Phase 1 (`src/data/`) — implemented in Plan 06. Phase 2/3/4 add the rest as encounter-specific files.
 
 2. **Should the Phase 1 BattleScene render a `<SpriteFallback />` to visually validate ASSETS-07?**
    - What we know: ASSETS-07 requires the fallback exists and works; no requirement for it to render in Phase 1.
-   - Recommendation: yes, render one in the BattleScene shell — it costs ~5 lines and proves the CSS Module import works through Next's bundler.
+   - RESOLVED: Yes — implemented in Plan 07 Task 2. Renders one in the BattleScene shell to prove the CSS Module import works through Next's bundler.
 
 3. **Auto mode + GSD enforcement: does scaffolding via `npx create-next-app` count as "direct repo edits outside GSD workflow"?**
    - What we know: CLAUDE.md says no direct edits outside GSD; scaffolding writes 50+ files.
-   - Recommendation: the planner should structure the scaffold step as one task within the Phase 1 plan, executed under `/gsd-execute-phase` — that satisfies the workflow contract.
+   - RESOLVED: Structured as Plan 01 Task 2 within `/gsd-execute-phase` — satisfies the workflow contract.
 
 4. **Discrepancy between CLAUDE.md and SUMMARY.md on state management:**
    - CLAUDE.md "Recommended Stack" still lists Zustand 5.
    - SUMMARY.md "Stack Conflict Resolution" + STATE.md "Key Decisions" lock `useReducer`.
-   - Recommendation: Phase 1 follows SUMMARY.md/STATE.md (no Zustand). Add a follow-up doc task (separate from Phase 1) to update CLAUDE.md "State Management" row to reflect the reconciled decision and avoid future confusion.
+   - RESOLVED: Phase 1 follows SUMMARY.md/STATE.md (no Zustand) — Plan 01 explicitly excludes Zustand from the install list, Plan 08 verifies via inverse grep. CLAUDE.md update deferred to a follow-up doc task post-Phase 1.
 
 ---
 
