@@ -164,14 +164,103 @@
 
 ## Traceability
 
-(A ser preenchido pelo gsd-roadmapper após criação do ROADMAP)
+Every v1 REQ-ID is mapped to exactly one phase. Coverage: 76/76 ✓
 
 | REQ-ID | Phase | Plan | Status |
 |--------|-------|------|--------|
-| FOUND-01 | TBD | TBD | pending |
-| ... | ... | ... | ... |
+| FOUND-01 | Phase 1 | TBD | pending |
+| FOUND-02 | Phase 1 | TBD | pending |
+| FOUND-03 | Phase 1 | TBD | pending |
+| FOUND-04 | Phase 1 | TBD | pending |
+| FOUND-05 | Phase 1 | TBD | pending |
+| FOUND-06 | Phase 1 | TBD | pending |
+| FOUND-07 | Phase 1 | TBD | pending |
+| FOUND-08 | Phase 1 | TBD | pending |
+| ENGINE-01 | Phase 1 | TBD | pending |
+| ENGINE-02 | Phase 1 | TBD | pending |
+| ENGINE-03 | Phase 1 | TBD | pending |
+| ENGINE-04 | Phase 1 | TBD | pending |
+| ENGINE-05 | Phase 1 | TBD | pending |
+| ENGINE-06 | Phase 1 | TBD | pending |
+| ENGINE-07 | Phase 2 | TBD | pending |
+| ENGINE-08 | Phase 2 | TBD | pending |
+| ENGINE-09 | Phase 2 | TBD | pending |
+| ENGINE-10 | Phase 2 | TBD | pending |
+| SKILL-01 | Phase 2 | TBD | pending |
+| SKILL-02 | Phase 3 | TBD | pending |
+| SKILL-03 | Phase 3 | TBD | pending |
+| SKILL-04 | Phase 2 | TBD | pending |
+| SKILL-05 | Phase 3 | TBD | pending |
+| AI-01 | Phase 1 | TBD | pending |
+| AI-02 | Phase 2 | TBD | pending |
+| AI-03 | Phase 3 | TBD | pending |
+| AI-04 | Phase 3 | TBD | pending |
+| AI-05 | Phase 1 | TBD | pending |
+| ENC-01 | Phase 2 | TBD | pending |
+| ENC-02 | Phase 3 | TBD | pending |
+| ENC-03 | Phase 3 | TBD | pending |
+| ENC-04 | Phase 4 | TBD | pending |
+| ENC-05 | Phase 3 | TBD | pending |
+| ENC-06 | Phase 3 | TBD | pending |
+| OVERDRIVE-01 | Phase 4 | TBD | pending |
+| OVERDRIVE-02 | Phase 4 | TBD | pending |
+| OVERDRIVE-03 | Phase 4 | TBD | pending |
+| OVERDRIVE-04 | Phase 4 | TBD | pending |
+| OVERDRIVE-05 | Phase 4 | TBD | pending |
+| OVERDRIVE-06 | Phase 4 | TBD | pending |
+| OVERDRIVE-07 | Phase 4 | TBD | pending |
+| OVERDRIVE-08 | Phase 4 | TBD | pending |
+| UI-01 | Phase 2 | TBD | pending |
+| UI-02 | Phase 2 | TBD | pending |
+| UI-03 | Phase 2 | TBD | pending |
+| UI-04 | Phase 2 | TBD | pending |
+| UI-05 | Phase 2 | TBD | pending |
+| UI-06 | Phase 3 | TBD | pending |
+| UI-07 | Phase 2 | TBD | pending |
+| UI-08 | Phase 3 | TBD | pending |
+| UI-09 | Phase 2 | TBD | pending |
+| UI-10 | Phase 2 | TBD | pending |
+| VISUAL-01 | Phase 2 | TBD | pending |
+| VISUAL-02 | Phase 2 | TBD | pending |
+| VISUAL-03 | Phase 2 | TBD | pending |
+| VISUAL-04 | Phase 3 | TBD | pending |
+| VISUAL-05 | Phase 3 | TBD | pending |
+| VISUAL-06 | Phase 4 | TBD | pending |
+| VISUAL-07 | Phase 2 | TBD | pending |
+| NARR-01 | Phase 5 | TBD | pending |
+| NARR-02 | Phase 5 | TBD | pending |
+| NARR-03 | Phase 5 | TBD | pending |
+| NARR-04 | Phase 5 | TBD | pending |
+| NARR-05 | Phase 5 | TBD | pending |
+| NARR-06 | Phase 5 | TBD | pending |
+| END-01 | Phase 4 | TBD | pending |
+| END-02 | Phase 2 | TBD | pending |
+| END-03 | Phase 2 | TBD | pending |
+| END-04 | Phase 2 | TBD | pending |
+| END-05 | Phase 4 | TBD | pending |
+| ASSETS-01 | Phase 2 (DEADZONE) + Phase 3 (TORC, TRINETRA) | TBD | pending |
+| ASSETS-02 | Phase 2 (Probe) + Phase 3 (Networker, Patrol) + Phase 4 (AEGIS-7) | TBD | pending |
+| ASSETS-03 | Phase 2 (corridor) + Phase 3 (dock, server) + Phase 4 (command chamber) | TBD | pending |
+| ASSETS-04 | Phase 4 + Phase 5 (logo polish) | TBD | pending |
+| ASSETS-05 | Phase 4 + Phase 5 (effect polish) | TBD | pending |
+| ASSETS-06 | Phase 3 + Phase 5 (icon polish) | TBD | pending |
+| ASSETS-07 | Phase 1 | TBD | pending |
+| QA-01 | Phase 1 | TBD | pending |
+| QA-02 | Phase 1 | TBD | pending |
+| QA-03 | Phase 1 | TBD | pending |
+| QA-04 | Phase 1 | TBD | pending |
+| QA-05 | Phase 1 | TBD | pending |
+| QA-06 | Phase 4 | TBD | pending |
+| QA-07 | Phase 5 | TBD | pending |
+| QA-08 | Phase 5 | TBD | pending |
+| DEPLOY-01 | Phase 5 | TBD | pending |
+| DEPLOY-02 | Phase 5 | TBD | pending |
+| DEPLOY-03 | Phase 5 | TBD | pending |
+| DEPLOY-04 | Phase 5 | TBD | pending |
+
+**Note on ASSETS rows:** ASSETS-01/02/03 are split across multiple phases by sub-asset (one character or one BG at a time). ASSETS-04/05/06 receive a polish pass in Phase 5 after initial creation in earlier phases. This parallelization is intentional — see ROADMAP.md "Asset Strategy Note" for rationale.
 
 ---
 
 *Total: 76 requirements across 12 categories.*
-*Last updated: 2026-04-25 — initialized after research synthesis.*
+*Last updated: 2026-04-25 — traceability table populated by gsd-roadmapper.*
