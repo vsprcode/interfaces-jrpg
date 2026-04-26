@@ -1205,4 +1205,118 @@ describe('battleReducer', () => {
       expect(dzAfter2!.statusEffects).toHaveLength(0);
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SKILL/TRINETRA: System Override — heal + remove status
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('SKILL/TRINETRA: System Override', () => {
+    const trinetra: Character = {
+      kind: 'player', id: 'TRINETRA', name: 'TRINETRA',
+      hp: 85, maxHp: 85, en: 35, maxEn: 35, atk: 15, def: 12, spd: 15,
+      statusEffects: [], isDefeated: false, isDefending: false,
+    };
+
+    it('SKILL/TRINETRA (System Override HEAL): heals 30 HP on target, capped at maxHp', () => {
+      const dzLowHp: Character = { ...dz, hp: 50, maxHp: 95 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [trinetra, dzLowHp],
+        enemies: [probe],
+        phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'TRINETRA', kind: 'player', spd: 15 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'TRINETRA', targetId: 'DEADZONE', skillVariant: 'HEAL' },
+      });
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.pendingAction!.hpDelta).toHaveLength(1);
+      expect(next.pendingAction!.hpDelta![0]!.targetId).toBe('DEADZONE');
+      expect(next.pendingAction!.hpDelta![0]!.amount).toBe(30);
+      expect(next.pendingAction!.enDelta).toHaveLength(1);
+      expect(next.pendingAction!.enDelta![0]!.targetId).toBe('TRINETRA');
+      expect(next.pendingAction!.enDelta![0]!.amount).toBe(-10);
+      expect(next.pendingAction!.animationType).toBe('SKILL_HEAL');
+    });
+
+    it('SKILL/TRINETRA (System Override HEAL): heal capped at remaining HP headroom', () => {
+      // DEADZONE hp=90, maxHp=95 → healAmount = min(30, 95-90) = 5
+      const dzAlmostFull: Character = { ...dz, hp: 90, maxHp: 95 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [trinetra, dzAlmostFull],
+        enemies: [probe],
+        phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'TRINETRA', kind: 'player', spd: 15 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'TRINETRA', targetId: 'DEADZONE', skillVariant: 'HEAL' },
+      });
+      expect(next.pendingAction!.hpDelta![0]!.amount).toBe(5);
+    });
+
+    it('SKILL/TRINETRA (System Override REMOVE_STATUS): removes first status from target', () => {
+      const dzWithBuff: Character = {
+        ...dz,
+        statusEffects: [{ type: 'DEF_BUFF', turnsRemaining: 1, magnitude: 8 }],
+      };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [trinetra, dzWithBuff],
+        enemies: [probe],
+        phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'TRINETRA', kind: 'player', spd: 15 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'TRINETRA', targetId: 'DEADZONE', skillVariant: 'REMOVE_STATUS' },
+      });
+      expect(next.pendingAction!.statusRemoved).toHaveLength(1);
+      expect(next.pendingAction!.statusRemoved![0]!.targetId).toBe('DEADZONE');
+      expect(next.pendingAction!.statusRemoved![0]!.effectType).toBe('DEF_BUFF');
+    });
+
+    it('SKILL/TRINETRA: EN guard — returns same state if en < 10', () => {
+      const trinetraLowEn: Character = { ...trinetra, en: 9 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [trinetraLowEn, dz],
+        enemies: [probe],
+        phase: 'PLAYER_INPUT',
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'TRINETRA', targetId: 'DEADZONE', skillVariant: 'HEAL' },
+      });
+      expect(next).toBe(state);
+    });
+
+    it('SKILL/TRINETRA: returns same state if target not found', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [trinetra],
+        enemies: [probe],
+        phase: 'PLAYER_INPUT',
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'TRINETRA', targetId: 'TORC', skillVariant: 'HEAL' },
+      });
+      expect(next).toBe(state);
+    });
+  });
 });

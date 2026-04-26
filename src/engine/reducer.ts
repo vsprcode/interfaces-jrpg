@@ -151,6 +151,57 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
             };
           }
 
+          if (actorId === 'TRINETRA') {
+            // System Override (SKILL-03): heal 30 HP OR remove status, EN cost 10
+            const EN_COST = 10;
+            if (actor.en < EN_COST) return state;
+
+            const healTarget = state.party.find(c => c.id === targetId && !c.isDefeated);
+            if (!healTarget) return state;
+
+            const variant = action.payload.skillVariant ?? 'HEAL';
+
+            if (variant === 'HEAL') {
+              const healAmount = Math.min(30, healTarget.maxHp - healTarget.hp);
+              const resolved: ResolvedAction = {
+                actorId: actor.id,
+                description: `TRINETRA executa SYSTEM OVERRIDE — restaura ${healAmount} HP em ${healTarget.name}`,
+                hpDelta: [{ targetId: healTarget.id, amount: healAmount }],
+                enDelta: [{ targetId: actor.id, amount: -EN_COST }],
+                animationType: 'SKILL_HEAL',
+              };
+              return {
+                ...state,
+                party: partyCleared,
+                phase: 'RESOLVING',
+                pendingAction: resolved,
+                log: [...state.log, resolved.description],
+              };
+            }
+
+            if (variant === 'REMOVE_STATUS') {
+              const toRemove = healTarget.statusEffects[0]?.type;
+              const resolved: ResolvedAction = {
+                actorId: actor.id,
+                description: `TRINETRA executa SYSTEM OVERRIDE — protocolo de limpeza em ${healTarget.name}`,
+                enDelta: [{ targetId: actor.id, amount: -EN_COST }],
+                statusRemoved: toRemove
+                  ? [{ targetId: healTarget.id, effectType: toRemove }]
+                  : [],
+                animationType: 'SKILL_HEAL',
+              };
+              return {
+                ...state,
+                party: partyCleared,
+                phase: 'RESOLVING',
+                pendingAction: resolved,
+                log: [...state.log, resolved.description],
+              };
+            }
+
+            return state;
+          }
+
           // Signal Null — DEADZONE (SKILL-01/04): defPenetration 0.7, EN cost 8
           const EN_COST = 8;
           if (actor.en < EN_COST) return state; // SKILL-04: same-reference no-op (T-02-03-01)
