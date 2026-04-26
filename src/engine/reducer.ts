@@ -165,7 +165,7 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
           });
           newEnemies = newEnemies.map(e => {
             if (e.id !== delta.targetId) return e;
-            const newHp = Math.max(0, e.hp + delta.amount);
+            const newHp = Math.max(0, Math.min(e.maxHp, e.hp + delta.amount));
             return { ...e, hp: newHp, isDefeated: newHp <= 0 };
           });
         }
@@ -240,12 +240,16 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
       const enemy = state.enemies.find(e => e.id === enemyId);
       if (!enemy || enemy.isDefeated) {
         // T-02-03-03: Skip defeated enemy — advance turn index without RESOLVING
+        // WR-01: phase must be derived from next queue entry kind (not hardcoded)
         const nextIndex = state.currentTurnIndex + 1;
         if (nextIndex >= state.turnQueue.length) {
           const newQueue = buildTurnQueue(state.party, state.enemies);
-          return { ...state, turnQueue: newQueue, currentTurnIndex: 0, round: state.round + 1 };
+          const nextPhase = newQueue[0]?.kind === 'player' ? 'PLAYER_INPUT' : 'ENEMY_TURN';
+          return { ...state, turnQueue: newQueue, currentTurnIndex: 0, round: state.round + 1, phase: nextPhase };
         }
-        return { ...state, currentTurnIndex: nextIndex };
+        const nextEntry = state.turnQueue[nextIndex];
+        const nextPhase = nextEntry?.kind === 'player' ? 'PLAYER_INPUT' : 'ENEMY_TURN';
+        return { ...state, currentTurnIndex: nextIndex, phase: nextPhase };
       }
       const resolvedAction = resolveEnemyAction(enemy, state);
       return {
@@ -257,17 +261,22 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
     }
 
     case 'NEXT_TURN': {
+      // WR-02: phase must be derived from next queue entry kind (not left as-is)
       const nextIndex = state.currentTurnIndex + 1;
       if (nextIndex >= state.turnQueue.length) {
         const newQueue = buildTurnQueue(state.party, state.enemies);
+        const nextPhase = newQueue[0]?.kind === 'player' ? 'PLAYER_INPUT' : 'ENEMY_TURN';
         return {
           ...state,
           turnQueue: newQueue,
           currentTurnIndex: 0,
           round: state.round + 1,
+          phase: nextPhase,
         };
       }
-      return { ...state, currentTurnIndex: nextIndex };
+      const nextEntry = state.turnQueue[nextIndex];
+      const nextPhase = nextEntry?.kind === 'player' ? 'PLAYER_INPUT' : 'ENEMY_TURN';
+      return { ...state, currentTurnIndex: nextIndex, phase: nextPhase };
     }
 
     case 'CHECK_END_CONDITIONS': {
