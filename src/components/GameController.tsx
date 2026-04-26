@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { Character } from '@/engine/types';
 import { ENCOUNTER_CONFIGS } from '@/data/encounters';
 import { BattleScene } from '@/components/BattleScene';
@@ -9,13 +9,31 @@ import { DialogueBox } from '@/components/DialogueBox';
 import { DemoCompletedScreen } from '@/components/DemoCompletedScreen';
 
 type ControllerPhase =
+  | 'OPENING_DIALOGUE'       // cinematic intro before E1 (NARR-01)
   | 'BATTLE'
   | 'ENCOUNTER_2_DIALOGUE'
   | 'ENCOUNTER_3_DIALOGUE'
-  | 'ENCOUNTER_4_DIALOGUE'  // AEGIS-7 reveal before E4 (ENC-04)
+  | 'ENCOUNTER_4_DIALOGUE'   // AEGIS-7 reveal before E4 (ENC-04)
+  | 'CLOSING_DIALOGUE'       // cinematic outro after AEGIS-7 defeat (NARR-01)
   | 'ENCOUNTER_COMPLETE'
-  | 'DEMO_COMPLETED'         // shown after AEGIS-7 defeated (END-01)
+  | 'DEMO_COMPLETED'         // shown after closing dialogue (END-01)
   | 'GAME_OVER';
+
+// Opening cinematic — shown before E1 on first load and on NOVA INFILTRACAO (NARR-01)
+const OPENING_DIALOGUE_LINES = [
+  { speaker: 'SISTEMA', text: 'Arcologia Casting-7. São Paulo. 2042. Protocolo Interfaces Agreement em vigor — identidade = dispositivo.' },
+  { speaker: 'SISTEMA', text: 'Chuva ácida no Corredor 7-A. Visibilidade: 12%. Patrulhas: 3 setores ativos.' },
+  { speaker: 'DEADZONE', text: 'Rourke. Ghost. Sem implante neural, sem rastro no grid. Aqui começa a infiltração.' },
+  { speaker: 'DEADZONE', text: 'Objetivo: atravessar a arcologia. Sem heróis. Apenas saída.' },
+];
+
+// Closing cinematic — shown after AEGIS-7 defeat before DemoCompletedScreen (NARR-01)
+const CLOSING_DIALOGUE_LINES = [
+  { speaker: 'SISTEMA', text: 'AEGIS-7 neutralizado. Câmara de Comando: protocolo de lockdown em 90 segundos.' },
+  { speaker: 'TRINETRA', text: 'Os dados foram extraídos. O que a Casting Syndicate queria esconder agora está conosco.' },
+  { speaker: 'DEADZONE', text: 'Isso foi um setor. A arcologia tem dezesseis.' },
+  { speaker: 'SISTEMA', text: '>>> DEMO ENCERRADA. PRÓXIMO CAPÍTULO EM BREVE. <<<' },
+];
 
 // Lore dialogue shown before E2 — TORC intro
 const E2_DIALOGUE = [
@@ -54,7 +72,7 @@ export function GameController() {
   const [encounterIndex, setEncounterIndex] = useState(0);
   // T-03-04-03: battleKey increments on both game-over retry and encounter advance
   const [battleKey, setBattleKey] = useState(0);
-  const [controllerPhase, setControllerPhase] = useState<ControllerPhase>('BATTLE');
+  const [controllerPhase, setControllerPhase] = useState<ControllerPhase>('OPENING_DIALOGUE');
   // carryParty: HP persists between encounters; EN resets; status effects cleared (ENC-05)
   const [carryParty, setCarryParty] = useState<Character[]>(ENCOUNTER_CONFIGS[0]!.party);
   const [completedParty, setCompletedParty] = useState<Character[]>([]);
@@ -94,8 +112,8 @@ export function GameController() {
       setCarryParty(nextParty);
       setControllerPhase('ENCOUNTER_4_DIALOGUE');
     } else if (encounterIndex === 3) {
-      // E4 complete (AEGIS-7 defeated) → DEMO COMPLETED screen (END-01)
-      setControllerPhase('DEMO_COMPLETED');
+      // E4 complete (AEGIS-7 defeated) → closing cinematic before DEMO COMPLETED (NARR-01)
+      setControllerPhase('CLOSING_DIALOGUE');
     } else {
       // Fallback for any future encounters beyond E4
       setControllerPhase('ENCOUNTER_COMPLETE');
@@ -107,6 +125,12 @@ export function GameController() {
     setBattleKey(k => k + 1);
     setControllerPhase('BATTLE');
   };
+
+  // Called when opening cutscene finishes — transition to first battle (NARR-01)
+  const handleOpeningComplete = () => setControllerPhase('BATTLE');
+
+  // Called when closing cutscene finishes — transition to DemoCompletedScreen (NARR-01)
+  const handleClosingComplete = () => setControllerPhase('DEMO_COMPLETED');
 
   // Called when DialogueBox finishes — advance to next encounter
   const handleDialogueComplete = () => {
@@ -121,16 +145,19 @@ export function GameController() {
     setControllerPhase('BATTLE');
   };
 
-  // END-05: reset to E1 from DemoCompletedScreen — fresh party, battleKey increment forces remount
+  // END-05: reset to E1 from DemoCompletedScreen — replays opening cutscene (NARR-01: NOVA INFILTRACAO must not skip intro)
   const handleNewGame = () => {
     setEncounterIndex(0);
     setCarryParty(ENCOUNTER_CONFIGS[0]!.party);
     setBattleKey(k => k + 1);
-    setControllerPhase('BATTLE');
+    setControllerPhase('OPENING_DIALOGUE');
   };
 
   return (
     <div className="relative w-full max-w-4xl mx-auto" style={{ aspectRatio: '16/9' }}>
+      {controllerPhase === 'OPENING_DIALOGUE' && (
+        <DialogueBox lines={OPENING_DIALOGUE_LINES} onComplete={handleOpeningComplete} />
+      )}
       {controllerPhase === 'BATTLE' && (
         <BattleScene
           key={battleKey}
@@ -149,6 +176,9 @@ export function GameController() {
       )}
       {controllerPhase === 'ENCOUNTER_4_DIALOGUE' && (
         <DialogueBox lines={E4_DIALOGUE} onComplete={handleDialogueComplete} />
+      )}
+      {controllerPhase === 'CLOSING_DIALOGUE' && (
+        <DialogueBox lines={CLOSING_DIALOGUE_LINES} onComplete={handleClosingComplete} />
       )}
       {controllerPhase === 'ENCOUNTER_COMPLETE' && (
         <EncounterCompleteScreen
