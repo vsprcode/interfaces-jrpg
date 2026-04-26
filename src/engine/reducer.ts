@@ -1,6 +1,7 @@
 import type { BattleState, Action, ResolvedAction } from './types';
 import { buildTurnQueue } from './turnQueue';
 import { calculateDamage } from './damage';
+import { resolveEnemyAction } from './enemyAI';
 
 export const initialBattleState: BattleState = {
   phase: 'INIT',
@@ -121,12 +122,25 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
         }
 
         case 'SKILL': {
-          // Implemented in Plan 03 (Signal Null)
-          // SKILL-04: if EN < 8 cost, return same reference (no-op)
+          // Signal Null (SKILL-01/04): defPenetration 0.7, EN cost 8
           const EN_COST = 8;
-          if (actor.en < EN_COST) return state;
-          // Plan 03 will replace this stub with real Signal Null logic
-          return state;
+          if (actor.en < EN_COST) return state; // SKILL-04: same-reference no-op (T-02-03-01)
+          const target = state.enemies.find(e => e.id === targetId)!;
+          const dmg = calculateDamage(actor, target, { defPenetration: 0.7 });
+          const resolved: ResolvedAction = {
+            actorId: actor.id,
+            description: `DEADZONE transmite SIGNAL NULL — protocolo de ruído digital ativado — ${dmg} de dano (DEF ignorada em 30%)`,
+            hpDelta: [{ targetId: target.id, amount: -dmg }],
+            enDelta: [{ targetId: actor.id, amount: -EN_COST }],
+            animationType: 'SKILL_ELECTRIC',
+          };
+          return {
+            ...state,
+            party: partyCleared,
+            phase: 'RESOLVING',
+            pendingAction: resolved,
+            log: [...state.log, resolved.description],
+          };
         }
       }
     }
@@ -222,16 +236,23 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
 
     case 'ENEMY_ACTION': {
       if (state.phase !== 'ENEMY_TURN') return state;
-      // Full AI call wired in Plan 03. For now, keep this case structured for Plan 03 to drop in.
-      // Plan 03 will import resolveEnemyAction and replace this stub.
+      const { enemyId } = action.payload;
+      const enemy = state.enemies.find(e => e.id === enemyId);
+      if (!enemy || enemy.isDefeated) {
+        // T-02-03-03: Skip defeated enemy — advance turn index without RESOLVING
+        const nextIndex = state.currentTurnIndex + 1;
+        if (nextIndex >= state.turnQueue.length) {
+          const newQueue = buildTurnQueue(state.party, state.enemies);
+          return { ...state, turnQueue: newQueue, currentTurnIndex: 0, round: state.round + 1 };
+        }
+        return { ...state, currentTurnIndex: nextIndex };
+      }
+      const resolvedAction = resolveEnemyAction(enemy, state);
       return {
         ...state,
         phase: 'RESOLVING',
-        pendingAction: {
-          actorId: action.payload.enemyId,
-          description: 'enemy acts',
-          animationType: 'ATTACK',
-        },
+        pendingAction: resolvedAction,
+        log: [...state.log, resolvedAction.description],
       };
     }
 

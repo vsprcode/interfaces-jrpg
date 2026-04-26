@@ -1,4 +1,5 @@
 import type { Enemy, ResolvedAction, EnemyBehaviorType, BattleState } from './types';
+import { calculateDamage } from './damage';
 
 /**
  * AI function signature.
@@ -16,8 +17,27 @@ export type AIFn = (enemy: Enemy, state: BattleState) => ResolvedAction;
  * adding one entry here — no switch statements to extend, no class hierarchy.
  */
 export const AI_BEHAVIORS: Record<EnemyBehaviorType, AIFn> = {
-  // Phase 2 implements ALWAYS_ATTACK fully
-  ALWAYS_ATTACK: (enemy, state) => stubAction(enemy, state, 'always_attack stub'),
+  // Phase 2 Plan 03: ALWAYS_ATTACK real implementation (AI-02)
+  ALWAYS_ATTACK: (enemy, state) => {
+    const validTargets = state.party.filter(c => !c.isDefeated);
+    if (validTargets.length === 0) {
+      throw new Error('ALWAYS_ATTACK: no valid targets — GAME_OVER should have fired first');
+    }
+    const target = validTargets[0]!; // first alive party member (deterministic, AI-02)
+    const dmg = calculateDamage(enemy, target, {
+      damageMultiplier: target.isDefending ? 0.5 : 1.0,
+    });
+    // T-02-03-02: isDefending check — dedicated test asserts dmg halved when defending
+    const description = target.isDefending
+      ? `Casting Probe MK-I varre o corredor — DEADZONE absorve o impacto — ${dmg} de dano`
+      : `Casting Probe MK-I varre o corredor — sonda de ataque detecta DEADZONE — ${dmg} de dano`;
+    return {
+      actorId: enemy.id,
+      description,
+      hpDelta: [{ targetId: target.id, amount: -dmg }],
+      animationType: 'ATTACK',
+    };
+  },
 
   // Phase 3 implements TARGET_LOWEST_HP and ATTACK_RANDOM
   TARGET_LOWEST_HP: (enemy, state) => stubAction(enemy, state, 'target_lowest_hp stub'),
