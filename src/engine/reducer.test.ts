@@ -488,11 +488,11 @@ describe('battleReducer', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // SKILL: EN guard (SKILL comes in Plan 03, but EN guard test needed now)
+  // SKILL-01 / SKILL-04: Signal Null (Plan 03)
   // ─────────────────────────────────────────────────────────────────────────
 
-  describe('PLAYER_ACTION SKILL: EN guard', () => {
-    it('returns same state when SKILL dispatched with EN < 8 (no-op)', () => {
+  describe('SKILL-01/04: PLAYER_ACTION SKILL — Signal Null', () => {
+    it('SKILL-04: returns same state reference when EN < 8 (no-op)', () => {
       const dzLowEn = { ...dz, en: 4 };
       const state: BattleState = {
         ...initialBattleState,
@@ -503,6 +503,151 @@ describe('battleReducer', () => {
         payload: { type: 'SKILL', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
       });
       expect(next).toBe(state);
+    });
+
+    it('SKILL-04: returns same state reference when EN is exactly 0', () => {
+      const dzNoEn = { ...dz, en: 0 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzNoEn], enemies: [probe], phase: 'PLAYER_INPUT',
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next).toBe(state);
+    });
+
+    it('SKILL-01: deals 18 damage to Casting Probe (defPenetration 0.7)', () => {
+      // DEADZONE ATK:22, PROBE DEF:6 → effectiveDef=floor(6*0.7)=4 → dmg=max(1,22-4)=18
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe], phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.pendingAction).not.toBeNull();
+      expect(next.pendingAction!.hpDelta).toHaveLength(1);
+      expect(next.pendingAction!.hpDelta![0]!.amount).toBe(-18);
+      expect(next.pendingAction!.hpDelta![0]!.targetId).toBe('CASTING_PROBE_MK1');
+    });
+
+    it('SKILL-01: transitions to RESOLVING with animationType SKILL_ELECTRIC', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe], phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.pendingAction!.animationType).toBe('SKILL_ELECTRIC');
+    });
+
+    it('SKILL-01: costs exactly 8 EN — enDelta has amount -8 for actor', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe], phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next.pendingAction!.enDelta).toBeDefined();
+      expect(next.pendingAction!.enDelta).toHaveLength(1);
+      expect(next.pendingAction!.enDelta![0]!.targetId).toBe('DEADZONE');
+      expect(next.pendingAction!.enDelta![0]!.amount).toBe(-8);
+    });
+
+    it('ACTION_RESOLVED after SKILL deducts 8 EN from actor (25 - 8 = 17)', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'Signal Null',
+          hpDelta: [{ targetId: 'CASTING_PROBE_MK1', amount: -18 }],
+          enDelta: [{ targetId: 'DEADZONE', amount: -8 }],
+          animationType: 'SKILL_ELECTRIC',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.party[0]!.en).toBe(17); // 25 - 8 = 17
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ENEMY_ACTION: real AI integration (Plan 03)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('ENEMY_ACTION: real AI integration (Plan 03)', () => {
+    it('ENEMY_ACTION calls resolveEnemyAction and sets pendingAction with real hpDelta', () => {
+      // PROBE ATK:14, DEADZONE DEF:10 → dmg = max(1, 14-10) = 4
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe], phase: 'ENEMY_TURN',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1,
+      };
+      const next = battleReducer(state, {
+        type: 'ENEMY_ACTION',
+        payload: { enemyId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.pendingAction).not.toBeNull();
+      expect(next.pendingAction!.hpDelta).toBeDefined();
+      expect(next.pendingAction!.hpDelta).toHaveLength(1);
+      expect(next.pendingAction!.hpDelta![0]!.targetId).toBe('DEADZONE');
+      expect(next.pendingAction!.hpDelta![0]!.amount).toBe(-4);
+    });
+
+    it('ENEMY_ACTION with defeated enemy skips to next turn (does not RESOLVING)', () => {
+      // T-02-03-03: defeated enemy guard — should advance turn, not RESOLVING
+      const probeDefeated = { ...probe, isDefeated: true };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probeDefeated], phase: 'ENEMY_TURN',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1,
+      };
+      const next = battleReducer(state, {
+        type: 'ENEMY_ACTION',
+        payload: { enemyId: 'CASTING_PROBE_MK1' },
+      });
+      // Should NOT be RESOLVING with a pendingAction for a dead enemy
+      expect(next.phase).not.toBe('RESOLVING');
     });
   });
 
