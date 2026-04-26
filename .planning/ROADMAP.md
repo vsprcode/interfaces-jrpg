@@ -2,7 +2,7 @@
 
 **Project:** [In]terfaces JRPG — Browser turn-based demo
 **Granularity:** standard (5 phases)
-**Last updated:** 2026-04-25
+**Last updated:** 2026-04-26
 
 ---
 
@@ -48,7 +48,13 @@
   2. Player can select `[ATACAR]`, `[HABILIDADE]` (Signal Null — disabled if EN < 8), `[DEFENDER]`, `[ITEM]` (Nano-Med) via mouse or keyboard and see floating damage numbers + animated HP/EN bars
   3. Player defeats the Probe and triggers the engine's victory transition (logs end of encounter, clears battle); player who lets DEADZONE die sees `GAME OVER` with a working `TENTAR NOVAMENTE` that resets via React `key` prop
   4. Battle log shows lore-flavored action text in chronological order; AI Probe always attacks (no skipped turns, no double-fires) under React Strict Mode
-**Plans**: TBD
+**Plans**: 6 plans
+- [ ] 02-01-PLAN.md — Test Infrastructure (jsdom + RTL install + vitest config dual-env + gameStateRef tests)
+- [ ] 02-02-PLAN.md — Reducer Engine (PLAYER_ACTION routing ATTACK/DEFEND/ITEM + ACTION_RESOLVED delta applier) [TDD]
+- [ ] 02-03-PLAN.md — Signal Null + ALWAYS_ATTACK AI (SKILL case + AI-02 real implementation) [TDD]
+- [ ] 02-04-PLAN.md — ActionMenu + CharacterHUD (4-button command menu + HP/EN bars + battle.module.css)
+- [ ] 02-05-PLAN.md — EnemyPanel + BattleLog + FloatingDamageNumber (enemy display + log + damage popup)
+- [ ] 02-06-PLAN.md — BattleScene Integration + End Screens (full wiring + VictoryScreen + GameOverScreen + human verify)
 **UI hint**: yes
 
 ### Phase 3: Party Expansion (Encounters 2 & 3)
@@ -93,8 +99,8 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Pure Engine | 0/8 | Planned | - |
-| 2. Encounter 1 — DEADZONE Solo | 0/0 | Not started | - |
+| 1. Foundation & Pure Engine | 8/8 | Complete | 2026-04-26 |
+| 2. Encounter 1 — DEADZONE Solo | 0/6 | Planned | - |
 | 3. Party Expansion (E2 & E3) | 0/0 | Not started | - |
 | 4. AEGIS-7 + OVERDRIVE Boss | 0/0 | Not started | - |
 | 5. Polish, Narrative & Demo | 0/0 | Not started | - |
@@ -140,4 +146,4 @@ If any AI-generated asset blocks a phase, the CSS fallback from ASSETS-07 ships 
 
 ---
 
-*Last updated: 2026-04-25 — initial roadmap created from REQUIREMENTS + research synthesis.*
+*Last updated: 2026-04-26 — Phase 2 planned (6 plans, 4 waves).*
