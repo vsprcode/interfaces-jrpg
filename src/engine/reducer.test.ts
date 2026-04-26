@@ -123,7 +123,7 @@ describe('battleReducer', () => {
       ...initialBattleState,
       party: [dz], enemies: [probe], phase: 'ENEMY_TURN',
     };
-    const next = battleReducer(state, { type: 'ENEMY_ACTION' });
+    const next = battleReducer(state, { type: 'ENEMY_ACTION', payload: { enemyId: 'CASTING_PROBE_MK1' } });
     expect(next.phase).toBe('RESOLVING');
     expect(next).not.toBe(state);
   });
@@ -133,7 +133,7 @@ describe('battleReducer', () => {
       ...initialBattleState,
       party: [dz], enemies: [probe], phase: 'PLAYER_INPUT',
     };
-    expect(battleReducer(state, { type: 'ENEMY_ACTION' })).toBe(state);
+    expect(battleReducer(state, { type: 'ENEMY_ACTION', payload: { enemyId: 'CASTING_PROBE_MK1' } })).toBe(state);
   });
 
   it('NEXT_TURN advances currentTurnIndex within the same round', () => {
