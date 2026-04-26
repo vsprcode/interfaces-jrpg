@@ -1,0 +1,54 @@
+/* CSS-only combatant silhouettes. Used when sprite assets are missing.
+ * Produces a glowing geometric outline keyed off a CSS variable.
+ *
+ * Usage:
+ *   <div className={styles.sprite} data-kind="player" style={{ '--glow': '#00BFFF' }} />
+ *   <div className={styles.sprite} data-kind="enemy"  style={{ '--glow': '#FF1744' }} />
+ */
+
+.sprite {
+  --glow: #00BFFF;
+  width: 96px;
+  height: 128px;
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 191, 255, 0.05) 40%,
+    var(--glow) 100%
+  );
+  border: 2px solid var(--glow);
+  box-shadow:
+    0 0 8px var(--glow),
+    inset 0 0 12px color-mix(in srgb, var(--glow) 30%, transparent);
+  clip-path: polygon(
+    35% 0%, 65% 0%, 70% 15%, 60% 25%, 70% 35%,
+    85% 50%, 80% 75%, 70% 100%, 30% 100%, 20% 75%,
+    15% 50%, 30% 35%, 40% 25%, 30% 15%
+  );
+  image-rendering: pixelated;
+}
+
+.sprite[data-kind="enemy"] {
+  clip-path: polygon(
+    20% 0%, 80% 0%, 90% 20%, 100% 50%,
+    90% 80%, 80% 100%, 20% 100%, 10% 80%,
+    0% 50%, 10% 20%
+  );
+}
+
+.sprite[data-kind="boss"] {
+  width: 192px;
+  height: 192px;
+  clip-path: polygon(
+    25% 0%, 75% 0%, 100% 25%, 100% 75%,
+    75% 100%, 25% 100%, 0% 75%, 0% 25%
+  );
+  animation: bossPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes bossPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--glow), inset 0 0 12px color-mix(in srgb, var(--glow) 30%, transparent); }
+  50%      { box-shadow: 0 0 24px var(--glow), inset 0 0 32px color-mix(in srgb, var(--glow) 50%, transparent); }
+}
