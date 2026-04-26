@@ -3,21 +3,18 @@
 import React, { useReducer, useEffect, useRef, useState } from 'react';
 import { battleReducer, initialBattleState } from '@/engine/reducer';
 import { useGameStateRef } from '@/engine/gameStateRef';
-import { DEADZONE } from '@/data/characters';
-import { CASTING_PROBE_MK1 } from '@/data/enemies';
 import { ActionMenu } from '@/components/ActionMenu';
 import { CharacterHUD } from '@/components/CharacterHUD';
 import { EnemyPanel } from '@/components/EnemyPanel';
 import { BattleLog } from '@/components/BattleLog';
 import { FloatingDamageNumber } from '@/components/FloatingDamageNumber';
 import { SpriteFallback } from '@/components/SpriteFallback';
-import { VictoryScreen } from '@/components/VictoryScreen';
 import { GameOverScreen } from '@/components/GameOverScreen';
-import type { CombatantId } from '@/engine/types';
+import type { Character, Enemy, CombatantId } from '@/engine/types';
 import styles from '@/styles/battle.module.css';
 
 /**
- * BattleScene — Phase 2 fully-wired battle loop.
+ * BattleScene — Phase 3 fully-parameterized battle loop.
  *
  * Preserves all five Phase 1 pitfall guardrails:
  *   1. Strict Mode safe (Pitfall 1, QA-01): every useEffect with timer has clearTimeout cleanup.
@@ -26,13 +23,13 @@ import styles from '@/styles/battle.module.css';
  *   4. 'use client' (Pitfall 5, FOUND-02): top of file.
  *   5. No random values in render path (QA-04): all randomization stays in reducer.
  *
- * Phase 2 additions:
- *   - All 5 child components wired (CharacterHUD, EnemyPanel, ActionMenu, BattleLog, FloatingDamageNumber)
- *   - ENEMY_TURN useEffect: dispatches ENEMY_ACTION after 600ms beat delay
- *   - Damage popup state: monotonic popupCounter, setPopups triggered on pendingAction.hpDelta
- *   - Screen flash: flashVariant 'a'|'b' toggle forces CSS animation re-trigger (VISUAL-03)
- *   - DEADZONE sprite animation state: derived from pendingAction.animationType (UI-04)
- *   - VictoryScreen and GameOverScreen rendered on terminal phases
+ * Phase 3 changes:
+ *   - BattleSceneProps extended: party, enemies, encounterIndex, onVictory, onGameOver
+ *   - INIT dispatch uses props (not hardcoded DEADZONE/CASTING_PROBE_MK1)
+ *   - onVictory called via stateRef.current.party (Pitfall 4 — stale closure guard)
+ *   - handleAttack/handleSkill/handleDefend/handleItem all actor-aware via turnQueue
+ *   - VictoryScreen removed — GameController handles post-victory flow
+ *   - Background variant applied via encounterIndex
  */
 
 interface DamagePopup {
@@ -43,10 +40,14 @@ interface DamagePopup {
 }
 
 interface BattleSceneProps {
-  onGameOver?: () => void;
+  party: Character[];
+  enemies: Enemy[];
+  encounterIndex: number;
+  onVictory: (finalParty: Character[]) => void;
+  onGameOver: () => void;
 }
 
-export function BattleScene({ onGameOver }: BattleSceneProps = {}) {
+export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameOver }: BattleSceneProps) {
   const [state, dispatch] = useReducer(battleReducer, initialBattleState);
   const stateRef = useGameStateRef(state);
 
@@ -54,13 +55,21 @@ export function BattleScene({ onGameOver }: BattleSceneProps = {}) {
   const popupCounter = useRef(0);
   const [flashVariant, setFlashVariant] = useState<'a' | 'b'>('a');
 
-  // ── One-shot INIT (Strict Mode safe via useRef flag — RESEARCH §15.1) ──────
+  // ── One-shot INIT using props (Strict Mode safe via useRef flag — RESEARCH §15.1) ──
   const initFired = useRef(false);
   useEffect(() => {
     if (initFired.current) return;
     initFired.current = true;
-    dispatch({ type: 'INIT', payload: { party: [DEADZONE], enemies: [CASTING_PROBE_MK1] } });
-  }, []);
+    dispatch({ type: 'INIT', payload: { party, enemies } });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally runs once
+
+  // ── VICTORY phase effect — HP carry-over via stateRef (Pitfall 4 — stale closure guard) ──
+  // T-03-04-02: use stateRef.current.party, not closed-over state, to avoid stale party ref
+  useEffect(() => {
+    if (state.phase === 'VICTORY') {
+      onVictory(stateRef.current.party);
+    }
+  }, [state.phase, onVictory, stateRef]);
 
   // ── Animation gate: RESOLVING → ACTION_RESOLVED after 800ms (QA-01, QA-02) ──
   // Triggers damage popups and screen flash when pendingAction has hpDelta.
@@ -119,68 +128,90 @@ export function BattleScene({ onGameOver }: BattleSceneProps = {}) {
   }, [state.phase, state.currentTurnIndex, stateRef, state.enemies, state.turnQueue]);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
-  const deadzone = state.party[0];
-  const probe = state.enemies[0];
+  // Current actor derived from turn queue (not hardcoded to DEADZONE)
+  const currentEntry = state.turnQueue[state.currentTurnIndex];
+  const currentActor = state.party.find(c => c.id === currentEntry?.combatantId && !c.isDefeated)
+    ?? state.party.find(c => !c.isDefeated)
+    ?? state.party[0];
 
-  // UI-04: Derive DEADZONE sprite animation state from phase + pendingAction
+  // UI-04: Derive sprite animation state from phase + pendingAction
   // Maps to data-state attribute on sprite wrapper; CSS rules in battle.module.css apply visuals.
   type SpriteState = 'idle' | 'attack' | 'skill' | 'defend' | 'hurt';
-  const spriteState: SpriteState = (() => {
+  const getSpriteState = (characterId: string): SpriteState => {
     if (state.phase === 'RESOLVING' && state.pendingAction) {
-      if (state.pendingAction.actorId === 'DEADZONE') {
+      if (state.pendingAction.actorId === characterId) {
         const anim = state.pendingAction.animationType;
         if (anim === 'ATTACK') return 'attack';
-        if (anim === 'SKILL_ELECTRIC') return 'skill';
+        if (anim === 'SKILL_ELECTRIC' || anim === 'SKILL_SHIELD' || anim === 'SKILL_HEAL') return 'skill';
         if (anim === 'DEFEND') return 'defend';
-      } else {
-        // Enemy is acting — DEADZONE is receiving damage
+      } else if (state.pendingAction.hpDelta?.some(d => d.targetId === characterId)) {
         return 'hurt';
       }
     }
     return 'idle';
-  })();
+  };
 
   // Action dispatch handlers (wired to ActionMenu callbacks)
+  // All handlers derive current actor from turnQueue (not hardcoded actorId)
   const handleAttack = () => {
-    if (!probe || probe.isDefeated) return;
+    const entry = state.turnQueue[state.currentTurnIndex];
+    const actor = state.party.find(c => c.id === entry?.combatantId && !c.isDefeated);
+    if (!actor) return;
+    const aliveEnemy = state.enemies.find(e => !e.isDefeated);
+    if (!aliveEnemy) return;
     dispatch({
       type: 'PLAYER_ACTION',
-      payload: { type: 'ATTACK', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      payload: { type: 'ATTACK', actorId: actor.id, targetId: aliveEnemy.id },
     });
   };
 
   const handleSkill = () => {
-    if (!probe || probe.isDefeated) return;
-    dispatch({
-      type: 'PLAYER_ACTION',
-      payload: { type: 'SKILL', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
-    });
+    const entry = state.turnQueue[state.currentTurnIndex];
+    const actor = state.party.find(c => c.id === entry?.combatantId);
+    if (!actor) return;
+    if (actor.id === 'TORC') {
+      dispatch({ type: 'PLAYER_ACTION', payload: { type: 'SKILL', actorId: 'TORC' } });
+    } else if (actor.id === 'DEADZONE') {
+      const aliveEnemy = state.enemies.find(e => !e.isDefeated);
+      if (!aliveEnemy) return;
+      dispatch({ type: 'PLAYER_ACTION', payload: { type: 'SKILL', actorId: 'DEADZONE', targetId: aliveEnemy.id } });
+    }
+    // TRINETRA: handled via skill picker in Plan 03-06 — no-op for now
   };
 
   const handleDefend = () => {
-    dispatch({
-      type: 'PLAYER_ACTION',
-      payload: { type: 'DEFEND', actorId: 'DEADZONE' },
-    });
+    const entry = state.turnQueue[state.currentTurnIndex];
+    const actor = state.party.find(c => c.id === entry?.combatantId);
+    if (!actor) return;
+    dispatch({ type: 'PLAYER_ACTION', payload: { type: 'DEFEND', actorId: actor.id } });
   };
 
   const handleItem = () => {
-    dispatch({
-      type: 'PLAYER_ACTION',
-      payload: { type: 'ITEM', actorId: 'DEADZONE', targetId: 'DEADZONE' },
-    });
+    const entry = state.turnQueue[state.currentTurnIndex];
+    const actor = state.party.find(c => c.id === entry?.combatantId);
+    if (!actor) return;
+    dispatch({ type: 'PLAYER_ACTION', payload: { type: 'ITEM', actorId: actor.id, targetId: actor.id } });
   };
 
   // ── Render ────────────────────────────────────────────────────────────────────
   const flashClass = flashVariant === 'a' ? styles.flashA : styles.flashB;
+
+  // Background variant by encounter index (ASSETS-03)
+  const bgVariants = ['corridor', 'loading_dock', 'server_room'] as const;
+  const bgKey = bgVariants[encounterIndex] ?? 'corridor';
+  const bgClass = [
+    styles.battleBackground,
+    bgKey === 'loading_dock' ? styles.bg_loading_dock : undefined,
+    bgKey === 'server_room' ? styles.bg_server_room : undefined,
+  ].filter(Boolean).join(' ');
 
   return (
     <div
       className="relative w-full max-w-4xl mx-auto"
       style={{ aspectRatio: '16/9', fontFamily: 'var(--font-pixel), monospace' }}
     >
-      {/* BG_corridor CSS gradient (ASSETS-03) */}
-      <div className={`absolute inset-0 ${styles.battleBackground}`} aria-hidden="true" />
+      {/* Background gradient variant by encounter (ASSETS-03) */}
+      <div className={`absolute inset-0 ${bgClass}`} aria-hidden="true" />
 
       {/* Screen flash overlay (VISUAL-03, T-02-06-04: pointer-events none so buttons stay clickable)
           key={flashVariant} forces DOM re-create → CSS animation restarts from frame 0 on each hit */}
@@ -194,14 +225,14 @@ export function BattleScene({ onGameOver }: BattleSceneProps = {}) {
       {/* Main battle layout: flex-col enemy / party / HUD */}
       <div className="relative flex flex-col h-full" style={{ zIndex: 10 }}>
 
-        {/* Enemy zone — EnemyPanel satisfies UI-03 (Probe HP visible alongside CharacterHUD below) */}
-        <div className="flex-1 flex items-center justify-center relative">
-          {probe && (
-            <div className="relative">
-              <EnemyPanel enemy={probe} />
-              {/* Floating damage numbers on enemy */}
+        {/* Enemy zone — EnemyPanel(s) satisfy UI-03 */}
+        <div className="flex-1 flex items-center justify-center gap-8 relative">
+          {state.enemies.map(enemy => (
+            <div key={enemy.id} className="relative">
+              <EnemyPanel enemy={enemy} />
+              {/* Floating damage numbers on each enemy */}
               {popups
-                .filter(p => p.targetId === 'CASTING_PROBE_MK1')
+                .filter(p => p.targetId === enemy.id)
                 .map(popup => (
                   <FloatingDamageNumber
                     key={popup.id}
@@ -211,24 +242,24 @@ export function BattleScene({ onGameOver }: BattleSceneProps = {}) {
                   />
                 ))}
             </div>
-          )}
+          ))}
         </div>
 
-        {/* Party zone — DEADZONE sprite with animation state (UI-04, ASSETS-01) */}
-        <div className="flex-1 flex items-end justify-start px-4 pb-2">
-          {deadzone && (
-            <div className="relative flex items-end gap-4">
+        {/* Party zone — character sprites with animation states (UI-04, ASSETS-01) */}
+        <div className="flex-1 flex items-end justify-start px-4 pb-2 gap-4">
+          {state.party.map(character => (
+            <div key={character.id} className="relative flex items-end gap-2">
               {/* data-state drives CSS selectors in battle.module.css for animation (UI-04) */}
               <div
-                data-state={spriteState}
-                style={{ opacity: deadzone.isDefending ? 0.8 : 1 }}
+                data-state={getSpriteState(character.id)}
+                style={{ opacity: character.isDefending ? 0.8 : 1 }}
               >
-                <SpriteFallback combatantId="DEADZONE" kind="player" />
+                <SpriteFallback combatantId={character.id} kind="player" />
               </div>
-              {/* Floating damage numbers on DEADZONE */}
+              {/* Floating damage/heal numbers on each party member */}
               <div className="relative">
                 {popups
-                  .filter(p => p.targetId === 'DEADZONE')
+                  .filter(p => p.targetId === character.id)
                   .map(popup => (
                     <FloatingDamageNumber
                       key={popup.id}
@@ -239,11 +270,10 @@ export function BattleScene({ onGameOver }: BattleSceneProps = {}) {
                   ))}
               </div>
             </div>
-          )}
+          ))}
         </div>
 
-        {/* HUD footer: CharacterHUD + BattleLog + ActionMenu */}
-        {/* CharacterHUD satisfies UI-03 (DEADZONE HP/EN visible alongside EnemyPanel above) */}
+        {/* HUD footer: CharacterHUD(s) + BattleLog + ActionMenu */}
         <div
           className="flex flex-col"
           style={{
@@ -252,12 +282,14 @@ export function BattleScene({ onGameOver }: BattleSceneProps = {}) {
             borderTop: '1px solid rgba(255,255,255,0.1)',
           }}
         >
-          {/* Status row: CharacterHUD (UI-03) */}
+          {/* Status row: all CharacterHUDs (UI-03) */}
           <div
-            className="flex items-center px-3 py-1 gap-4"
+            className="flex items-center px-3 py-1 gap-4 overflow-x-auto"
             style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
           >
-            {deadzone && <CharacterHUD character={deadzone} />}
+            {state.party.map(character => (
+              <CharacterHUD key={character.id} character={character} />
+            ))}
           </div>
 
           {/* Battle log (UI-07) */}
@@ -266,10 +298,10 @@ export function BattleScene({ onGameOver }: BattleSceneProps = {}) {
           </div>
 
           {/* Command menu — ActionMenu handles its own PLAYER_INPUT phase guard (UI-02) */}
-          {deadzone && (
+          {currentActor && (
             <ActionMenu
               phase={state.phase}
-              actor={deadzone}
+              actor={currentActor}
               items={state.items}
               onAttack={handleAttack}
               onSkill={handleSkill}
@@ -280,14 +312,9 @@ export function BattleScene({ onGameOver }: BattleSceneProps = {}) {
         </div>
       </div>
 
-      {/* Victory overlay (END-02 partial) */}
-      {state.phase === 'VICTORY' && (
-        <VictoryScreen message="Probe MK-I neutralizada. Corredor 7-A desobstruído." />
-      )}
-
       {/* Game over overlay (END-02, END-03, END-04) */}
       {state.phase === 'GAME_OVER' && (
-        <GameOverScreen onRetry={onGameOver ?? (() => {})} />
+        <GameOverScreen onRetry={onGameOver} />
       )}
     </div>
   );

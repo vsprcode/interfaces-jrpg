@@ -16,6 +16,29 @@
   );
 }
 
+/* Background encounter variants (ASSETS-03)
+ * bg_loading_dock: industrial amber/rust gradient (Encounter 2)
+ * bg_server_room: server glow green/teal gradient (Encounter 3)
+ * Default .battleBackground = corridor (dark blue/teal, Encounter 1)
+ */
+.bg_loading_dock {
+  background: linear-gradient(
+    180deg,
+    #1a0a00 0%,
+    #2e1a0d 60%,
+    #100500 100%
+  );
+}
+
+.bg_server_room {
+  background: linear-gradient(
+    180deg,
+    #001a0a 0%,
+    #0d2e1a 60%,
+    #001005 100%
+  );
+}
+
 /* ── HP bar (UI-10, VISUAL-07) ────────────────────────────────────────────── */
 
 .hpBarTrack {

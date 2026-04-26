@@ -63,7 +63,7 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
           const dmg = calculateDamage(actor, target);
           const resolved: ResolvedAction = {
             actorId: actor.id,
-            description: `DEADZONE encontra brecha no firewall — ${dmg} de dano`,
+            description: `${actor.name} encontra brecha no firewall — ${dmg} de dano`,
             hpDelta: [{ targetId: target.id, amount: -dmg }],
             animationType: 'ATTACK',
           };
@@ -82,7 +82,7 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
           const enRecovery = Math.min(5, actor.maxEn - actor.en);
           const resolved: ResolvedAction = {
             actorId: actor.id,
-            description: 'DEADZONE ativa postura de contenção analógica — recupera 5 EN',
+            description: `${actor.name} ativa postura de contenção analógica — recupera 5 EN`,
             enDelta: enRecovery > 0 ? [{ targetId: actor.id, amount: enRecovery }] : [],
             animationType: 'DEFEND',
           };
@@ -107,7 +107,7 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
           const healAmount = Math.min(30, healTarget.maxHp - healTarget.hp);
           const resolved: ResolvedAction = {
             actorId: actor.id,
-            description: `DEADZONE injeta Nano-Med — restaura ${healAmount} HP`,
+            description: `${actor.name} injeta Nano-Med — restaura ${healAmount} HP`,
             hpDelta: [{ targetId: healTarget.id, amount: healAmount }],
             animationType: 'ITEM',
           };
