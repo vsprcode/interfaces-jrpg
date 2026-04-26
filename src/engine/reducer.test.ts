@@ -1319,4 +1319,231 @@ describe('battleReducer', () => {
       expect(next).toBe(state);
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // OVERDRIVE engine tests (Phase 4 Plan 04-02 — Tests G-M)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('OVERDRIVE reducer transitions (OVERDRIVE-01/02/04/05/06/07/08)', () => {
+    // AEGIS-7 enemy fixture
+    const aegis: Enemy = {
+      kind: 'enemy', id: 'AEGIS_7', name: 'AEGIS-7',
+      hp: 200, maxHp: 200, en: 0, maxEn: 0, atk: 28, def: 15, spd: 8,
+      statusEffects: [], isDefeated: false, behavior: 'OVERDRIVE_BOSS',
+      isOverdriveActive: false,
+    };
+    const aegisLowHp = { ...aegis, hp: 99 };
+
+    // Test G: PLAYER_ACTION DEFEND in OVERDRIVE_WARNING phase → transitions to RESOLVING (OVERDRIVE-07)
+    it('Test G: PLAYER_ACTION DEFEND when phase=OVERDRIVE_WARNING → returns new state with phase=RESOLVING (not no-op)', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        phase: 'OVERDRIVE_WARNING',
+        party: [dz],
+        enemies: [probe],
+        overdrivePending: true,
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'DEFEND', actorId: 'DEADZONE' },
+      });
+      // Must NOT be same reference (phase guard must pass, not no-op)
+      expect(next).not.toBe(state);
+      expect(next.phase).toBe('RESOLVING');
+    });
+
+    // Test H: PLAYER_ACTION ATTACK in OVERDRIVE_WARNING phase → transitions to RESOLVING (expanded guard)
+    it('Test H: PLAYER_ACTION ATTACK when phase=OVERDRIVE_WARNING → returns new state with phase=RESOLVING (expanded guard passes)', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        phase: 'OVERDRIVE_WARNING',
+        party: [dz],
+        enemies: [probe],
+        overdrivePending: true,
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'ATTACK', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next).not.toBe(state);
+      expect(next.phase).toBe('RESOLVING');
+    });
+
+    // Test I: ENEMY_ACTION with AEGIS_7 hp<100, overdrivePending=false → phase=RESOLVING, overdrivePending=true (OVERDRIVE-01+02)
+    it('Test I: ENEMY_ACTION when phase=ENEMY_TURN, AEGIS_7 hp<100, overdrivePending=false → state.phase=RESOLVING and state.overdrivePending=true', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        phase: 'ENEMY_TURN',
+        party: [dz],
+        enemies: [aegisLowHp],
+        overdrivePending: false,
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'AEGIS_7', kind: 'enemy', spd: 8 },
+        ],
+        currentTurnIndex: 1,
+      };
+      const next = battleReducer(state, {
+        type: 'ENEMY_ACTION',
+        payload: { enemyId: 'AEGIS_7' },
+      });
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.overdrivePending).toBe(true);
+    });
+
+    // Test J: ACTION_RESOLVED with overdrivePending=true, next entry=player → phase=OVERDRIVE_WARNING (OVERDRIVE-02)
+    it('Test J: ACTION_RESOLVED with overdrivePending=true and next queue entry is player → nextPhase=OVERDRIVE_WARNING', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        phase: 'RESOLVING',
+        party: [dz],
+        enemies: [aegisLowHp],
+        overdrivePending: true,
+        turnQueue: [
+          { combatantId: 'AEGIS_7', kind: 'enemy', spd: 8 },
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'AEGIS_7',
+          description: 'AEGIS-7 SOBRECARREGA OS SERVOS — TERMINUS CARREGANDO',
+          animationType: 'OVERDRIVE_WARNING',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.phase).toBe('OVERDRIVE_WARNING');
+    });
+
+    // Test J2: ACTION_RESOLVED with overdrivePending=true, next entry=enemy → phase=OVERDRIVE_RESOLVING
+    it('Test J2: ACTION_RESOLVED with overdrivePending=true and next queue entry is enemy → nextPhase=OVERDRIVE_RESOLVING', () => {
+      // Scenario: player just acted (OVERDRIVE_WARNING phase), next is AEGIS_7 (enemy) → OVERDRIVE_RESOLVING
+      const state: BattleState = {
+        ...initialBattleState,
+        phase: 'RESOLVING',
+        party: [dz],
+        enemies: [aegisLowHp],
+        overdrivePending: true,
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'AEGIS_7', kind: 'enemy', spd: 8 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'DEADZONE defende',
+          animationType: 'DEFEND',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.phase).toBe('OVERDRIVE_RESOLVING');
+    });
+
+    // Test K: ENEMY_ACTION when phase=OVERDRIVE_RESOLVING → reducer allows it, AI returns TERMINUS, phase=RESOLVING
+    it('Test K: ENEMY_ACTION when phase=OVERDRIVE_RESOLVING → reducer accepts it (expanded guard), AI returns TERMINUS, phase=RESOLVING', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        phase: 'OVERDRIVE_RESOLVING',
+        party: [{ ...dz, isDefending: false }],
+        enemies: [aegisLowHp],
+        overdrivePending: true,
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'AEGIS_7', kind: 'enemy', spd: 8 },
+        ],
+        currentTurnIndex: 1,
+      };
+      const next = battleReducer(state, {
+        type: 'ENEMY_ACTION',
+        payload: { enemyId: 'AEGIS_7' },
+      });
+      // Phase guard must accept OVERDRIVE_RESOLVING — should NOT be no-op
+      expect(next).not.toBe(state);
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.pendingAction).not.toBeNull();
+      expect(next.pendingAction!.animationType).toBe('OVERDRIVE_TERMINUS');
+    });
+
+    // Test L: ACTION_RESOLVED when all party hp=0 → phase=GAME_OVER (fires before OVERDRIVE routing)
+    it('Test L: ACTION_RESOLVED when all party hp=0 before OVERDRIVE routing → phase=GAME_OVER (OVERDRIVE-05)', () => {
+      const dzDying = { ...dz, hp: 1 };
+      const state: BattleState = {
+        ...initialBattleState,
+        phase: 'RESOLVING',
+        party: [dzDying],
+        enemies: [aegisLowHp],
+        overdrivePending: true,
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'AEGIS_7', kind: 'enemy', spd: 8 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'AEGIS_7',
+          description: 'TERMINUS fires',
+          hpDelta: [{ targetId: 'DEADZONE', amount: -999 }],
+          animationType: 'OVERDRIVE_TERMINUS',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.phase).toBe('GAME_OVER');
+    });
+
+    // Test M: After TERMINUS fires, overdrivePending resets to false; next AEGIS ENEMY_ACTION
+    // (in ENEMY_TURN) produces OVERDRIVE_WARNING again — not immediate OVERDRIVE_RESOLVING
+    it('Test M: After TERMINUS resolves, overdrivePending=false; next AEGIS ENEMY_ACTION in ENEMY_TURN produces OVERDRIVE_WARNING (fresh cycle)', () => {
+      // Step 1: ACTION_RESOLVED after TERMINUS — should reset overdrivePending to false
+      const stateAfterTerminus: BattleState = {
+        ...initialBattleState,
+        phase: 'RESOLVING',
+        party: [dz],
+        enemies: [aegisLowHp],
+        overdrivePending: true,
+        turnQueue: [
+          { combatantId: 'AEGIS_7', kind: 'enemy', spd: 8 },
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'AEGIS_7',
+          description: 'AEGIS-7 dispara TERMINUS — protocolo de eliminação em cascata',
+          hpDelta: [],
+          animationType: 'OVERDRIVE_TERMINUS',
+        },
+      };
+      const afterResolved = battleReducer(stateAfterTerminus, { type: 'ACTION_RESOLVED' });
+      // overdrivePending must be false after TERMINUS resolves
+      expect(afterResolved.overdrivePending).toBe(false);
+
+      // Step 2: Put AEGIS in ENEMY_TURN with overdrivePending=false — should produce OVERDRIVE_WARNING
+      const stateForNextAegisTurn: BattleState = {
+        ...initialBattleState,
+        phase: 'ENEMY_TURN',
+        party: [dz],
+        enemies: [aegisLowHp],
+        overdrivePending: false,  // reset after TERMINUS
+        turnQueue: [
+          { combatantId: 'AEGIS_7', kind: 'enemy', spd: 8 },
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const nextAegisTurn = battleReducer(stateForNextAegisTurn, {
+        type: 'ENEMY_ACTION',
+        payload: { enemyId: 'AEGIS_7' },
+      });
+      // Must announce fresh OVERDRIVE_WARNING — not skip to OVERDRIVE_RESOLVING
+      expect(nextAegisTurn.overdrivePending).toBe(true);
+      expect(nextAegisTurn.pendingAction!.animationType).toBe('OVERDRIVE_WARNING');
+    });
+  });
 });

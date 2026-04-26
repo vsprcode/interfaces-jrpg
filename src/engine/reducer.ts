@@ -45,7 +45,8 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
 
     case 'PLAYER_ACTION': {
       // PHASE GUARD (ENGINE-05, QA-05, Pitfall 4)
-      if (state.phase !== 'PLAYER_INPUT') {
+      // OVERDRIVE-07: also accept OVERDRIVE_WARNING — all player actions resolve normally during OVERDRIVE_WARNING
+      if (state.phase !== 'PLAYER_INPUT' && state.phase !== 'OVERDRIVE_WARNING') {
         return state;
       }
 
@@ -319,6 +320,12 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
         };
       }
 
+      // OVERDRIVE-02: compute newOverdrivePending before routing.
+      // Reset to false after TERMINUS fires — allows a fresh OVERDRIVE_WARNING next AEGIS turn (OVERDRIVE-08).
+      const newOverdrivePending = state.pendingAction?.animationType === 'OVERDRIVE_TERMINUS'
+        ? false
+        : state.overdrivePending;
+
       // Advance turn queue
       const nextIndex = state.currentTurnIndex + 1;
       if (nextIndex >= state.turnQueue.length) {
@@ -328,7 +335,12 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
         // Rebuild queue for new round
         const newQueue = buildTurnQueue(newParty, newEnemies);
         const nextEntry = newQueue[0];
-        const nextPhase = nextEntry!.kind === 'player' ? 'PLAYER_INPUT' : 'ENEMY_TURN';
+        // OVERDRIVE-02: three-way routing based on overdrivePending and next entry kind
+        const nextPhase: import('./types').BattlePhase =
+          (newOverdrivePending && nextEntry?.kind === 'enemy')  ? 'OVERDRIVE_RESOLVING' :
+          (newOverdrivePending && nextEntry?.kind === 'player') ? 'OVERDRIVE_WARNING'   :
+          (nextEntry?.kind === 'player')                        ? 'PLAYER_INPUT'        :
+                                                                  'ENEMY_TURN';
         return {
           ...state,
           party: newParty,
@@ -337,24 +349,32 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
           currentTurnIndex: 0,
           round: state.round + 1,
           pendingAction: null,
+          overdrivePending: newOverdrivePending,
           phase: nextPhase,
         };
       }
 
       const nextEntry = state.turnQueue[nextIndex];
-      const nextPhase = nextEntry!.kind === 'player' ? 'PLAYER_INPUT' : 'ENEMY_TURN';
+      // OVERDRIVE-02: three-way routing based on overdrivePending and next entry kind
+      const nextPhase: import('./types').BattlePhase =
+        (newOverdrivePending && nextEntry?.kind === 'enemy')  ? 'OVERDRIVE_RESOLVING' :
+        (newOverdrivePending && nextEntry?.kind === 'player') ? 'OVERDRIVE_WARNING'   :
+        (nextEntry?.kind === 'player')                        ? 'PLAYER_INPUT'        :
+                                                                'ENEMY_TURN';
       return {
         ...state,
         party: newParty,
         enemies: newEnemies,
         currentTurnIndex: nextIndex,
         pendingAction: null,
+        overdrivePending: newOverdrivePending,
         phase: nextPhase,
       };
     }
 
     case 'ENEMY_ACTION': {
-      if (state.phase !== 'ENEMY_TURN') return state;
+      // OVERDRIVE-04: also accept OVERDRIVE_RESOLVING so AEGIS-7 can fire TERMINUS
+      if (state.phase !== 'ENEMY_TURN' && state.phase !== 'OVERDRIVE_RESOLVING') return state;
       const { enemyId } = action.payload;
       const enemy = state.enemies.find(e => e.id === enemyId);
       if (!enemy || enemy.isDefeated) {
@@ -371,6 +391,20 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
         return { ...state, currentTurnIndex: nextIndex, phase: nextPhase };
       }
       const resolvedAction = resolveEnemyAction(enemy, state);
+      // OVERDRIVE-01/02: OVERDRIVE_WARNING announcement goes through RESOLVING (not OVERDRIVE_WARNING).
+      // Reason: BattleScene animation loop dispatches ACTION_RESOLVED only when phase===RESOLVING.
+      // Setting phase=OVERDRIVE_WARNING here would freeze the game (pendingAction never consumed).
+      // ACTION_RESOLVED routing routes the NEXT player turn(s) to OVERDRIVE_WARNING phase.
+      if (resolvedAction.animationType === 'OVERDRIVE_WARNING') {
+        return {
+          ...state,
+          phase: 'RESOLVING',       // MUST be RESOLVING — NOT 'OVERDRIVE_WARNING'
+          overdrivePending: true,   // signals ACTION_RESOLVED to route next player turn to OVERDRIVE_WARNING
+          pendingAction: resolvedAction,
+          log: [...state.log, resolvedAction.description],
+        };
+      }
+      // Normal enemy action path:
       return {
         ...state,
         phase: 'RESOLVING',
