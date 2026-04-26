@@ -549,22 +549,25 @@ No security domain work is required for Phase 5.
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should NOVA INFILTRAÇÃO replay the opening cutscene?**
    - What we know: `handleNewGame` resets to E1; opening cutscene is DEADZONE's first appearance
    - What's unclear: User preference — immersive replay vs. fast retry
    - Recommendation: Default to replaying (set `controllerPhase` to `'OPENING_DIALOGUE'` in `handleNewGame`) — it takes 4 clicks to skip and provides full experience for friends the player shares the URL with
+   - **RESOLVED:** Yes — `handleNewGame` sets `controllerPhase` to `'OPENING_DIALOGUE'` (Plan 05-01 Task 1).
 
 2. **Should ASSETS-05 include a dedicated Signal Null (SKILL_ELECTRIC) visual effect?**
    - What we know: Forge Wall and System Override have dedicated CSS effects; Signal Null only gets the screen flash
    - What's unclear: Whether the scope calls for a third CSS effect or whether flash is sufficient
    - Recommendation: Add a simple `@keyframes electricFlicker` (yellow→cyan hue-rotate on the battle container, 300ms) to distinguish Signal Null from normal attacks — minimal CSS, no new components
+   - **RESOLVED:** Yes — `@keyframes electricFlicker` added in Plan 05-03 Task 1 alongside title screen polish.
 
 3. **ASSETS-06: Text badges vs. pixel icons for status effects**
    - What we know: Current implementation uses text labels (`SHIELD 2T`, `GUARD`, `TERMINUS`) in styled `<span>` elements
    - What's unclear: Whether ASSETS-06 requires actual pixel art icons or whether the text badge approach satisfies the requirement
    - Recommendation: Text badges are appropriate for demo scope. If the owner wants icons, they should be CSS-only (Unicode symbols or SVG data URIs in the `::before` pseudo-element) — no external icon library needed
+   - **RESOLVED:** Text badges satisfy ASSETS-06 for demo scope. No icon library needed (Plan 05-03 scope).
 
 ---
 
