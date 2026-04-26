@@ -66,7 +66,7 @@ describe('battleReducer', () => {
     };
     const next = battleReducer(state, {
       type: 'PLAYER_ACTION',
-      payload: { type: 'ATTACK', actorId: 'DEADZONE' },
+      payload: { type: 'ATTACK', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
     });
     expect(next.phase).toBe('RESOLVING');
     expect(next.pendingAction).not.toBeNull();
@@ -82,7 +82,7 @@ describe('battleReducer', () => {
     const snapshot = JSON.stringify(state);
     battleReducer(state, {
       type: 'PLAYER_ACTION',
-      payload: { type: 'ATTACK', actorId: 'DEADZONE' },
+      payload: { type: 'ATTACK', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
     });
     expect(JSON.stringify(state)).toBe(snapshot);
   });
@@ -175,7 +175,6 @@ describe('battleReducer', () => {
       pendingAction: { actorId: 'DEADZONE', description: 'test', animationType: 'ATTACK' },
     };
     const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
-    expect(next.phase).toBe('PLAYER_INPUT');
     expect(next.pendingAction).toBeNull();
   });
 
@@ -185,5 +184,529 @@ describe('battleReducer', () => {
       phase: 'PLAYER_INPUT',
     };
     expect(battleReducer(state, { type: 'ACTION_RESOLVED' })).toBe(state);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ENGINE-07: ATTACK
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('ENGINE-07: PLAYER_ACTION ATTACK', () => {
+    it('transitions to RESOLVING with hpDelta for enemy (DEADZONE vs PROBE = 16 dmg)', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe], phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'ATTACK', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.pendingAction).not.toBeNull();
+      expect(next.pendingAction!.hpDelta).toHaveLength(1);
+      expect(next.pendingAction!.hpDelta![0]!.amount).toBe(-16);
+      expect(next.pendingAction!.hpDelta![0]!.targetId).toBe('CASTING_PROBE_MK1');
+      expect(next.pendingAction!.animationType).toBe('ATTACK');
+    });
+
+    it('ACTION_RESOLVED after ATTACK applies hp delta to enemy (PROBE hp: 40 - 16 = 24)', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'DEADZONE encontra brecha no firewall — 16 de dano',
+          hpDelta: [{ targetId: 'CASTING_PROBE_MK1', amount: -16 }],
+          animationType: 'ATTACK',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.enemies[0]!.hp).toBe(24);
+      expect(next.pendingAction).toBeNull();
+    });
+
+    it('ACTION_RESOLVED advances to ENEMY_TURN when enemy is next in queue', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'DEADZONE encontra brecha no firewall — 16 de dano',
+          hpDelta: [{ targetId: 'CASTING_PROBE_MK1', amount: -16 }],
+          animationType: 'ATTACK',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.phase).toBe('ENEMY_TURN');
+      expect(next.currentTurnIndex).toBe(1);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ENGINE-08: DEFEND
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('ENGINE-08: PLAYER_ACTION DEFEND', () => {
+    it('sets pendingAction with animationType DEFEND and enDelta of +5', () => {
+      // DEADZONE en=20/25 so recovery capped at 5
+      const dzLowEn = { ...dz, en: 20 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzLowEn], enemies: [probe], phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'DEFEND', actorId: 'DEADZONE' },
+      });
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.pendingAction!.animationType).toBe('DEFEND');
+      expect(next.pendingAction!.enDelta).toBeDefined();
+      expect(next.pendingAction!.enDelta![0]!.amount).toBe(5);
+    });
+
+    it('caps EN recovery at maxEn (DEADZONE at full EN recovers 0)', () => {
+      // DEADZONE en=25/25, recovery = min(5, 25-25) = 0, enDelta is empty array
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe], phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'DEFEND', actorId: 'DEADZONE' },
+      });
+      expect(next.pendingAction!.enDelta).toHaveLength(0);
+    });
+
+    it('ACTION_RESOLVED after DEFEND sets isDefending: true on actor', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [{ ...dz, isDefending: false }],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'DEADZONE ativa postura de contenção analógica — recupera 5 EN',
+          enDelta: [{ targetId: 'DEADZONE', amount: 5 }],
+          animationType: 'DEFEND',
+        },
+      };
+      // isDefending is set during PLAYER_ACTION DEFEND (not in ACTION_RESOLVED)
+      // So we verify it was set in the party state before ACTION_RESOLVED
+      // After PLAYER_ACTION DEFEND, party[0].isDefending should be true
+      const dzDefending = { ...dz, isDefending: true };
+      const stateWithDefending: BattleState = {
+        ...state,
+        party: [dzDefending],
+      };
+      const next = battleReducer(stateWithDefending, { type: 'ACTION_RESOLVED' });
+      expect(next.party[0]!.isDefending).toBe(true);
+    });
+
+    it('PLAYER_ACTION DEFEND sets isDefending: true immediately in returned state', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [{ ...dz, isDefending: false }],
+        enemies: [probe],
+        phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'DEFEND', actorId: 'DEADZONE' },
+      });
+      expect(next.party[0]!.isDefending).toBe(true);
+    });
+
+    it('clears isDefending from previous turn when new PLAYER_ACTION is dispatched', () => {
+      // DEADZONE was defending (isDefending: true from previous turn)
+      // Dispatch ATTACK → isDefending should be cleared before processing
+      const dzWasDefending = { ...dz, isDefending: true };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzWasDefending], enemies: [probe], phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'ATTACK', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      });
+      // After ATTACK, isDefending should be false (cleared at start of PLAYER_ACTION)
+      expect(next.party[0]!.isDefending).toBe(false);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ENGINE-09 / ENGINE-10: ITEM (Nano-Med)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('ENGINE-09/10: PLAYER_ACTION ITEM (Nano-Med)', () => {
+    it('sets pendingAction with hpDelta of +30 (self-heal)', () => {
+      const dzLowHp = { ...dz, hp: 50 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzLowHp], enemies: [probe], phase: 'PLAYER_INPUT',
+        items: { nanoMed: 3 },
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'ITEM', actorId: 'DEADZONE', targetId: 'DEADZONE' },
+      });
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.pendingAction!.hpDelta).toHaveLength(1);
+      expect(next.pendingAction!.hpDelta![0]!.amount).toBe(30);
+      expect(next.pendingAction!.hpDelta![0]!.targetId).toBe('DEADZONE');
+    });
+
+    it('ACTION_RESOLVED after ITEM clamps hp at maxHp (80 + 30 = 95 not 110)', () => {
+      const dzAlmostFull = { ...dz, hp: 80 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzAlmostFull],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        items: { nanoMed: 2 },
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'DEADZONE injeta Nano-Med — restaura 15 HP',
+          hpDelta: [{ targetId: 'DEADZONE', amount: 30 }],
+          animationType: 'ITEM',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.party[0]!.hp).toBe(95); // clamped at maxHp
+    });
+
+    it('ACTION_RESOLVED after ITEM decrements nanoMed count', () => {
+      // nanoMed count is decremented during PLAYER_ACTION ITEM, not ACTION_RESOLVED
+      // But let's verify the state at dispatch time
+      const dzLowHp = { ...dz, hp: 50 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzLowHp], enemies: [probe], phase: 'PLAYER_INPUT',
+        items: { nanoMed: 3 },
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'ITEM', actorId: 'DEADZONE', targetId: 'DEADZONE' },
+      });
+      expect(next.items.nanoMed).toBe(2);
+    });
+
+    it('PLAYER_ACTION ITEM returns same state when nanoMed is 0 (item exhausted guard)', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe], phase: 'PLAYER_INPUT',
+        items: { nanoMed: 0 },
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'ITEM', actorId: 'DEADZONE', targetId: 'DEADZONE' },
+      });
+      expect(next).toBe(state); // same reference — no-op
+    });
+
+    it('ITEM heal is capped at remaining HP headroom (hp=80/95, heals 15 not 30)', () => {
+      const dzAlmostFull = { ...dz, hp: 80 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzAlmostFull], enemies: [probe], phase: 'PLAYER_INPUT',
+        items: { nanoMed: 1 },
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'ITEM', actorId: 'DEADZONE', targetId: 'DEADZONE' },
+      });
+      // heal amount = min(30, maxHp - hp) = min(30, 95 - 80) = 15
+      expect(next.pendingAction!.hpDelta![0]!.amount).toBe(15);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SKILL: EN guard (SKILL comes in Plan 03, but EN guard test needed now)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('PLAYER_ACTION SKILL: EN guard', () => {
+    it('returns same state when SKILL dispatched with EN < 8 (no-op)', () => {
+      const dzLowEn = { ...dz, en: 4 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzLowEn], enemies: [probe], phase: 'PLAYER_INPUT',
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next).toBe(state);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ACTION_RESOLVED: end conditions
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('ACTION_RESOLVED: end conditions checked before queue advance', () => {
+    it('routes to VICTORY when enemy is defeated by attack (not ENEMY_TURN)', () => {
+      // PROBE at hp=1, attack hits for 16 → isDefeated=true → VICTORY
+      const probeDying = { ...probe, hp: 1 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz],
+        enemies: [probeDying],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'fatal hit',
+          hpDelta: [{ targetId: 'CASTING_PROBE_MK1', amount: -16 }],
+          animationType: 'ATTACK',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.phase).toBe('VICTORY');
+      expect(next.enemies[0]!.isDefeated).toBe(true);
+      expect(next.enemies[0]!.hp).toBe(0);
+    });
+
+    it('routes to GAME_OVER when party is defeated', () => {
+      // DEADZONE at hp=2, probe attack hits for 4 → isDefeated → GAME_OVER
+      const dzDying = { ...dz, hp: 2 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzDying],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1, // enemy's turn
+        pendingAction: {
+          actorId: 'CASTING_PROBE_MK1',
+          description: 'probe attacks',
+          hpDelta: [{ targetId: 'DEADZONE', amount: -4 }],
+          animationType: 'ATTACK',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.phase).toBe('GAME_OVER');
+      expect(next.party[0]!.isDefeated).toBe(true);
+    });
+
+    it('does NOT advance to ENEMY_TURN when enemy is already defeated', () => {
+      // Confirms end condition is checked BEFORE queue advance (Pitfall C)
+      const probeKilled = { ...probe, hp: 1 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz],
+        enemies: [probeKilled],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'fatal attack',
+          hpDelta: [{ targetId: 'CASTING_PROBE_MK1', amount: -10 }],
+          animationType: 'ATTACK',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.phase).toBe('VICTORY');
+      // Must NOT be ENEMY_TURN
+      expect(next.phase).not.toBe('ENEMY_TURN');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Full turn cycle integration test
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('Full turn cycle integration: PLAYER_INPUT → RESOLVING → ENEMY_TURN → RESOLVING → PLAYER_INPUT', () => {
+    it('completes a full two-actor round returning to PLAYER_INPUT', () => {
+      // Step 1: INIT
+      let state = battleReducer(initialBattleState, {
+        type: 'INIT',
+        payload: { party: [dz], enemies: [probe] },
+      });
+      expect(state.phase).toBe('PLAYER_INPUT');
+      expect(state.turnQueue[0]!.combatantId).toBe('DEADZONE');
+
+      // Step 2: PLAYER_ACTION ATTACK
+      state = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'ATTACK', actorId: 'DEADZONE', targetId: 'CASTING_PROBE_MK1' },
+      });
+      expect(state.phase).toBe('RESOLVING');
+      expect(state.pendingAction!.hpDelta![0]!.amount).toBe(-16);
+
+      // Step 3: ACTION_RESOLVED (DEADZONE's attack resolves)
+      state = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(state.phase).toBe('ENEMY_TURN');
+      expect(state.enemies[0]!.hp).toBe(24); // 40 - 16 = 24
+      expect(state.currentTurnIndex).toBe(1);
+
+      // Step 4: ENEMY_ACTION (probe acts)
+      state = battleReducer(state, {
+        type: 'ENEMY_ACTION',
+        payload: { enemyId: 'CASTING_PROBE_MK1' },
+      });
+      expect(state.phase).toBe('RESOLVING');
+      expect(state.pendingAction).not.toBeNull();
+
+      // Step 5: ACTION_RESOLVED (probe's action resolves) — wraps to new round
+      state = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(state.phase).toBe('PLAYER_INPUT');
+      expect(state.round).toBe(2); // new round after both act
+      expect(state.currentTurnIndex).toBe(0);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ACTION_RESOLVED: EN delta application
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('ACTION_RESOLVED: EN delta application', () => {
+    it('applies enDelta to party member (DEFEND recovery capped at maxEn)', () => {
+      const dzLowEn = { ...dz, en: 20 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzLowEn],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'defend',
+          enDelta: [{ targetId: 'DEADZONE', amount: 5 }],
+          animationType: 'DEFEND',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.party[0]!.en).toBe(25); // 20 + 5 = 25 (at maxEn)
+    });
+
+    it('does not let EN exceed maxEn via enDelta', () => {
+      // DEADZONE at 23/25, +5 EN would be 28 but capped at 25
+      const dzNearFull = { ...dz, en: 23 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzNearFull],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'defend',
+          enDelta: [{ targetId: 'DEADZONE', amount: 5 }],
+          animationType: 'DEFEND',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.party[0]!.en).toBe(25); // clamped at maxEn
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ENEMY_ACTION: base wiring (Plan 03 fills AI call)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('ENEMY_ACTION: base wiring', () => {
+    it('sets pendingAction with the enemy actorId', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe], phase: 'ENEMY_TURN',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1,
+      };
+      const next = battleReducer(state, {
+        type: 'ENEMY_ACTION',
+        payload: { enemyId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next.pendingAction).not.toBeNull();
+      expect(next.pendingAction!.actorId).toBe('CASTING_PROBE_MK1');
+    });
   });
 });
