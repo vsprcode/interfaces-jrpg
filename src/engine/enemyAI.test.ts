@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { AI_BEHAVIORS, resolveEnemyAction } from './enemyAI';
-import { calculateDamage } from './damage';
 import { initialBattleState } from './reducer';
 import type { Enemy, Character, BattleState, EnemyBehaviorType } from './types';
 
