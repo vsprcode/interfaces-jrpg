@@ -704,22 +704,19 @@ Nyquist validation: **habilitado** (`workflow.nyquist_validation: true` em confi
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Fluxo exato de OVERDRIVE_WARNING como phase do jogador vs fase intermediária**
-   - O que sabemos: após AEGIS-7 anunciar (ENEMY_ACTION → animationType OVERDRIVE_WARNING), o ACTION_RESOLVED avança a fila
-   - O que está incerto: a próxima phase deve ser `PLAYER_INPUT` (normal, mas com flag overdrivePending) ou `OVERDRIVE_WARNING` (phase explícita que restringe ações a DEFENDER)
-   - Recomendação: usar `OVERDRIVE_WARNING` como phase explícita para simplificar o guard no ActionMenu e para o overlay saber exatamente quando aparecer. PLAYER_INPUT normal com flag seria menos explícito.
+1. **Fluxo exato de OVERDRIVE_WARNING como phase do jogador vs fase intermediária** — RESOLVED
+   - Decisão: OVERDRIVE_WARNING é phase explícita para turnos do JOGADOR (não para o anúncio do AEGIS).
+   - ENEMY_ACTION com animationType OVERDRIVE_WARNING → phase: 'RESOLVING' (não OVERDRIVE_WARNING direto, para não quebrar o animation loop que depende de RESOLVING para disparar ACTION_RESOLVED).
+   - ACTION_RESOLVED com overdrivePending=true e next=player → phase: 'OVERDRIVE_WARNING' (player vê overlay + DEFENDER glow).
+   - ACTION_RESOLVED com overdrivePending=true e next=enemy → phase: 'OVERDRIVE_RESOLVING'.
 
-2. **AEGIS-7 tem mais de um turno antes de atingir HP < 100?**
-   - O que sabemos: stats são HP 200, ATK 28, DEF 15, SPD 8 — SPD 8 é o mais lento de todos os combatentes
-   - O que está incerto: se o balanceamento permite que o trio derrote AEGIS antes do threshold de 100 HP (improvável com HP 200 e o trio em HP carry), ou se o encontro é sempre longo o suficiente para OVERDRIVE acontecer
-   - Recomendação: Não há ajuste necessário — se o player derrotar AEGIS antes de 100 HP, OVERDRIVE simplesmente nunca acontece (não é um bug, é valid play). Os testes de OVERDRIVE cobrem o cenário em que HP < 100 é atingido.
+2. **AEGIS-7 tem mais de um turno antes de atingir HP < 100?** — RESOLVED
+   - Não há ajuste necessário. Se o player derrotar AEGIS antes de 100 HP, OVERDRIVE nunca acontece (valid play). Os 13 testes do QA-06 cobrem o cenário em que HP < 100 é atingido.
 
-3. **DemoCompletedScreen — precisa de E4_DIALOGUE antes (NARR-04 é Phase 5)?**
-   - O que sabemos: NARR-04 (cutscene de revelação AEGIS-7) está mapeado para Phase 5
-   - O que está incerto: se Phase 4 precisa de pelo menos um dialogue minimal antes do E4, ou se vai direto para a batalha
-   - Recomendação: Phase 4 pode incluir um dialogue minimal de revelação do AEGIS-7 para justificar a transição narrativa, sem precisar da cutscene polida (que é Phase 5). Segue padrão de E2/E3 dialogues.
+3. **DemoCompletedScreen — precisa de E4_DIALOGUE antes (NARR-04 é Phase 5)?** — RESOLVED
+   - Decisão: Phase 4 inclui um dialogue minimal de revelação do AEGIS-7 (ENCOUNTER_4_DIALOGUE) antes da batalha, sem precisar da cutscene polida (Phase 5). Segue padrão dos dialogues de E2/E3.
 
 ---
 
