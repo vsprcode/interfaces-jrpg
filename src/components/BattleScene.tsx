@@ -55,6 +55,9 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
   const [popups, setPopups] = useState<DamagePopup[]>([]);
   const popupCounter = useRef(0);
   const [flashVariant, setFlashVariant] = useState<'a' | 'b'>('a');
+  const [shakeVariant, setShakeVariant] = useState<'a' | 'b'>('a');
+  const [skillEffect, setSkillEffect] = useState<'none' | 'shield' | 'heal'>('none');
+  const [skillEffectKey, setSkillEffectKey] = useState(0);
 
   // ── One-shot INIT using props (Strict Mode safe via useRef flag — RESEARCH §15.1) ──
   const initFired = useRef(false);
@@ -88,6 +91,28 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
       setPopups(prev => [...prev, ...newPopups]);
       // VISUAL-03: variant toggle re-triggers CSS animation (class name changes → DOM diff → animation restarts)
       setFlashVariant(v => v === 'a' ? 'b' : 'a');
+
+      // Camera shake: fires when any hpDelta hits for >= 20% of target maxHp (VISUAL-04)
+      const allCombatants = [...stateRef.current.party, ...stateRef.current.enemies];
+      const heavyHit = state.pendingAction.hpDelta.some(d => {
+        const target = allCombatants.find(c => c.id === d.targetId);
+        return target && d.amount < 0 && Math.abs(d.amount) >= Math.floor(target.maxHp * 0.2);
+      });
+      if (heavyHit) {
+        setShakeVariant(v => v === 'a' ? 'b' : 'a');
+      }
+    }
+
+    // Skill effects (VISUAL-05)
+    const animType = state.pendingAction?.animationType;
+    if (animType === 'SKILL_SHIELD') {
+      setSkillEffect('shield');
+      setSkillEffectKey(k => k + 1);
+    } else if (animType === 'SKILL_HEAL') {
+      setSkillEffect('heal');
+      setSkillEffectKey(k => k + 1);
+    } else {
+      setSkillEffect('none');
     }
 
     const timer = setTimeout(() => {
@@ -211,6 +236,7 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
 
   // ── Render ────────────────────────────────────────────────────────────────────
   const flashClass = flashVariant === 'a' ? styles.flashA : styles.flashB;
+  const shakeClass = shakeVariant === 'a' ? styles.shakeA : styles.shakeB;
 
   // Background variant by encounter index (ASSETS-03)
   const bgVariants = ['corridor', 'loading_dock', 'server_room'] as const;
@@ -223,7 +249,7 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
 
   return (
     <div
-      className="relative w-full max-w-4xl mx-auto"
+      className={`relative w-full max-w-4xl mx-auto ${shakeClass}`}
       style={{ aspectRatio: '16/9', fontFamily: 'var(--font-pixel), monospace' }}
     >
       {/* Background gradient variant by encounter (ASSETS-03) */}
@@ -271,7 +297,11 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
         </div>
 
         {/* Party zone — character sprites with animation states (UI-04, ASSETS-01) */}
-        <div className="flex-1 flex items-end justify-start px-4 pb-2 gap-4">
+        <div className="flex-1 flex items-end justify-start px-4 pb-2 gap-4 relative">
+          {/* Skill effect overlay — party zone (SKILL_SHIELD fires here, VISUAL-05) */}
+          {skillEffect === 'shield' && (
+            <div key={skillEffectKey} className={styles.skillShieldEffect} style={{ position: 'absolute', inset: 0, zIndex: 5 }} aria-hidden="true" />
+          )}
           {state.party.map(character => (
             <div key={character.id} className="relative flex items-end gap-2">
               {/* data-state drives CSS selectors in battle.module.css for animation (UI-04) */}
@@ -300,13 +330,17 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
 
         {/* HUD footer: CharacterHUD(s) + BattleLog + ActionMenu */}
         <div
-          className="flex flex-col"
+          className="flex flex-col relative"
           style={{
             height: '128px',
             background: 'rgba(0,0,0,0.7)',
             borderTop: '1px solid rgba(255,255,255,0.1)',
           }}
         >
+          {/* Skill effect overlay — HUD area (SKILL_HEAL fires here, VISUAL-05) */}
+          {skillEffect === 'heal' && (
+            <div key={skillEffectKey} className={styles.skillHealEffect} aria-hidden="true" />
+          )}
           {/* Status row: all CharacterHUDs (UI-03) */}
           <div
             className="flex items-center px-3 py-1 gap-4 overflow-x-auto"

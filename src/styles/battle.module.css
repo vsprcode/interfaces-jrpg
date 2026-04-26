@@ -153,6 +153,41 @@
   animation: shake 200ms ease-in-out;
 }
 
+/* Camera shake variant classes — alternate class name forces DOM diff → animation restart
+ * on consecutive heavy hits (same pattern as flashA/flashB for screen flash).
+ * VISUAL-04: fires on heavy hits (>= 20% maxHp). Uses transform only (VISUAL-07 GPU compositor). */
+.shakeA { animation: shake 300ms ease-in-out; }
+.shakeB { animation: shake 300ms ease-in-out; }
+
+/* ── Skill visual effects (VISUAL-05) ────────────────────────────────────── */
+
+/* Forge Wall (SKILL_SHIELD) — cyan pulse around party area */
+@keyframes shieldPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 191, 255, 0.6); }
+  50%  { box-shadow: 0 0 12px 4px rgba(0, 191, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 191, 255, 0); }
+}
+
+.skillShieldEffect {
+  animation: shieldPulse 600ms ease-out;
+  pointer-events: none;
+}
+
+/* System Override (SKILL_HEAL) — ripple on heal target area */
+@keyframes healRipple {
+  0%   { opacity: 0.8; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+.skillHealEffect {
+  animation: healRipple 500ms ease-out forwards;
+  border-radius: 50%;
+  border: 2px solid var(--color-cyan-neon);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 /* ── DEADZONE sprite animation states (UI-04) ─────────────────────────────── */
 /* data-state attribute on sprite wrapper drives visual feedback per action.
  * Targets .sprite class inside SpriteFallback (sprite-fallback.module.css).
