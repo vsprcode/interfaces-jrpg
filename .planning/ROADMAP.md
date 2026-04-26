@@ -106,8 +106,8 @@ Plans:
 **Plans**: 4 plans
 Plans:
 - [x] 05-01-PLAN.md — Wave 0: Narrative Foundation (NARR-01 opening cutscene + NARR-05 encounter-specific init messages)
-- [ ] 05-02-PLAN.md — Wave 1: NARR-06 closing gancho + Accessibility fixes (QA-08: DialogueBox contrast + aria-modal + HP bar aria-valuemin)
-- [ ] 05-03-PLAN.md — Wave 2: Title screen polish (ASSETS-04) + README.md (DEPLOY-04) + QA-07 browser UAT checklist
+- [x] 05-02-PLAN.md — Wave 1: NARR-06 closing gancho + Accessibility fixes (QA-08: DialogueBox contrast + aria-modal + HP bar aria-valuemin)
+- [x] 05-03-PLAN.md — Wave 2: Title screen polish (ASSETS-04) + README.md (DEPLOY-04) + QA-07 browser UAT checklist
 - [ ] 05-04-PLAN.md — Wave 3: GitHub repo + Vercel deploy + README URL update (DEPLOY-01/02/03/04)
 **UI hint**: yes
 
@@ -121,7 +121,7 @@ Plans:
 | 2. Encounter 1 — DEADZONE Solo | 0/6 | Planned | - |
 | 3. Party Expansion (E2 & E3) | 7/7 | Complete    | 2026-04-26 |
 | 4. AEGIS-7 + OVERDRIVE Boss | 4/4 | Complete   | 2026-04-26 |
-| 5. Polish, Narrative & Demo | 1/4 | In Progress|  |
+| 5. Polish, Narrative & Demo | 3/4 | In Progress|  |
 
 ---
 
