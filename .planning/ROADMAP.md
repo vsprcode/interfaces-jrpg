@@ -103,7 +103,12 @@ Plans:
   2. Every battle log line reads as in-fiction telemetry (e.g., "DEADZONE encontra brecha no firewall — 14 de dano") rather than mechanical strings; lore density is consistent across all 4 encounters
   3. Lighthouse Performance >= 80 and Accessibility >= 80 on the production build; no Strict Mode warnings; all `useEffect` timers verified clean
   4. Public Vercel URL is live, accessible, and reachable from a fresh browser — README.md documents local install + links the demo URL
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 05-01-PLAN.md — Wave 0: Narrative Foundation (NARR-01 opening cutscene + NARR-05 encounter-specific init messages)
+- [ ] 05-02-PLAN.md — Wave 1: NARR-06 closing gancho + Accessibility fixes (QA-08: DialogueBox contrast + aria-modal + HP bar aria-valuemin)
+- [ ] 05-03-PLAN.md — Wave 2: Title screen polish (ASSETS-04) + README.md (DEPLOY-04) + QA-07 browser UAT checklist
+- [ ] 05-04-PLAN.md — Wave 3: GitHub repo + Vercel deploy + README URL update (DEPLOY-01/02/03/04)
 **UI hint**: yes
 
 ---
@@ -116,7 +121,7 @@ Plans:
 | 2. Encounter 1 — DEADZONE Solo | 0/6 | Planned | - |
 | 3. Party Expansion (E2 & E3) | 7/7 | Complete    | 2026-04-26 |
 | 4. AEGIS-7 + OVERDRIVE Boss | 4/4 | Complete   | 2026-04-26 |
-| 5. Polish, Narrative & Demo | 0/0 | Not started | - |
+| 5. Polish, Narrative & Demo | 0/4 | Planned | - |
 
 ---
 
@@ -159,4 +164,4 @@ If any AI-generated asset blocks a phase, the CSS fallback from ASSETS-07 ships 
 
 ---
 
-*Last updated: 2026-04-26 — Phase 4 planned (4 plans, 4 waves).*
+*Last updated: 2026-04-26 — Phase 5 planned (4 plans, 4 waves).*
