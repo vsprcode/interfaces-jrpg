@@ -32,20 +32,24 @@ function makeActor(overrides: Partial<Character> = {}): Character {
 function renderMenu(overrides: {
   phase?: BattlePhase;
   actor?: Character;
+  party?: Character[];
   items?: { nanoMed: number };
   onAttack?: () => void;
   onSkill?: () => void;
   onDefend?: () => void;
   onItem?: () => void;
+  onSkillWithTarget?: (targetId: string, variant: 'HEAL' | 'REMOVE_STATUS') => void;
 } = {}) {
   const props = {
     phase: overrides.phase ?? 'PLAYER_INPUT',
     actor: overrides.actor ?? makeActor(),
+    party: overrides.party ?? [makeActor()],
     items: overrides.items ?? { nanoMed: 1 },
     onAttack: overrides.onAttack ?? vi.fn(),
     onSkill: overrides.onSkill ?? vi.fn(),
     onDefend: overrides.onDefend ?? vi.fn(),
     onItem: overrides.onItem ?? vi.fn(),
+    onSkillWithTarget: overrides.onSkillWithTarget ?? vi.fn(),
   };
   return { ...render(<ActionMenu {...props} />), ...props };
 }

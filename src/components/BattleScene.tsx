@@ -177,7 +177,22 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
       if (!aliveEnemy) return;
       dispatch({ type: 'PLAYER_ACTION', payload: { type: 'SKILL', actorId: 'DEADZONE', targetId: aliveEnemy.id } });
     }
-    // TRINETRA: handled via skill picker in Plan 03-06 — no-op for now
+    // TRINETRA: handled via onSkillWithTarget (two-step picker in ActionMenu)
+  };
+
+  const handleSkillWithTarget = (targetId: string, variant: 'HEAL' | 'REMOVE_STATUS') => {
+    const currentEntry = state.turnQueue[state.currentTurnIndex];
+    const actor = state.party.find(c => c.id === currentEntry?.combatantId);
+    if (!actor || actor.id !== 'TRINETRA') return;
+    dispatch({
+      type: 'PLAYER_ACTION',
+      payload: {
+        type: 'SKILL',
+        actorId: 'TRINETRA',
+        targetId: targetId as import('@/engine/types').CombatantId,
+        skillVariant: variant,
+      },
+    });
   };
 
   const handleDefend = () => {
@@ -312,11 +327,13 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
             <ActionMenu
               phase={state.phase}
               actor={currentActor}
+              party={state.party}
               items={state.items}
               onAttack={handleAttack}
               onSkill={handleSkill}
               onDefend={handleDefend}
               onItem={handleItem}
+              onSkillWithTarget={handleSkillWithTarget}
             />
           )}
         </div>
