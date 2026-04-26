@@ -4,4 +4,6 @@ import '@testing-library/jest-dom';
 
 // jsdom does not implement scrollIntoView — mock it globally so components
 // that call element.scrollIntoView() (e.g. BattleLog auto-scroll) do not throw.
-Element.prototype.scrollIntoView = vi.fn();
+if (typeof Element !== 'undefined') {
+  Element.prototype.scrollIntoView = vi.fn();
+}
