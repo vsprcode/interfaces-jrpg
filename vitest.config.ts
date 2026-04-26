@@ -1,9 +1,16 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   test: {
     environment: 'node',          // Default: pure TS engine tests run in Node (fast, no DOM overhead)
     globals: true,                // Allow describe/it/expect without imports
+    setupFiles: ['./src/test-setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     environmentMatchGlobs: [
       ['src/components/**/*.test.tsx', 'jsdom'],
