@@ -36,9 +36,9 @@ Plan: Not started
 | Field | Value |
 |-------|-------|
 | **Phase** | 4 — AEGIS-7 + OVERDRIVE Boss |
-| **Plan** | 04-02 complete (2/4) |
-| **Status** | Executing Phase 4 — Wave 1 done |
-| **Progress** | `[██████░░░░] 65% — 23/25 plans complete` |
+| **Plan** | 04-03 complete (3/4) |
+| **Status** | Executing Phase 4 — Wave 2 done |
+| **Progress** | `[██████░░░░] 68% — 24/25 plans complete` |
 
 ---
 
@@ -48,7 +48,7 @@ Plan: Not started
 |--------|--------|---------|
 | v1 requirements mapped | 76/76 | 76/76 ✓ |
 | Phases complete | 5/5 | 3/5 |
-| Vitest suite green | 100% | 116/116 ✓ |
+| Vitest suite green | 100% | 142/142 ✓ |
 | Lighthouse Performance | >= 80 | n/a |
 | Lighthouse Accessibility | >= 80 | n/a |
 | Production build clean | yes | ✓ (96.1 kB) |
@@ -100,9 +100,9 @@ None.
 - Read `.planning/phases/03-party-expansion-encounters-2-3/03-HUMAN-UAT.md` for pending Phase 3 browser UAT (19-step)
 - Read `.planning/phases/02-encounter-1-deadzone-solo/02-HUMAN-UAT.md` for pending Phase 2 browser UAT (14-step)
 
-**Last action (2026-04-26):** Phase 4 plan 04-02 complete — Wave 1 OVERDRIVE engine. Replaced OVERDRIVE_BOSS stub with full TERMINUS AI; added three-way ACTION_RESOLVED routing (OVERDRIVE_RESOLVING / OVERDRIVE_WARNING / normal); expanded PLAYER_ACTION + ENEMY_ACTION phase guards. 13 new TDD tests (A-F AI, G-M reducer), 116 total green, tsc clean. Commits: c5717ec (Task 1), 4a502f0 (Task 2).
+**Last action (2026-04-26):** Phase 4 plan 04-03 complete — Wave 2 OVERDRIVE UI. Wired OVERDRIVE engine to UI: OVERDRIVE overlay (pointer-events:none, zIndex 25) in BattleScene, isOverdrivePhase prop + defenderOverdriveGlow in ActionMenu, ENCOUNTER_4_DIALOGUE + DEMO_COMPLETED in GameController, DemoCompletedScreen with NOVA INFILTRACAO reset. 4 new tests, 142 total green, tsc clean. Commit: 6dc1f5e.
 
-**Next action:** Execute 04-03 — Wave 2 OVERDRIVE UI (OVERDRIVE_WARNING overlay + DEFENDER glow + TERMINUS animation).
+**Next action:** Execute 04-04 — Wave 3 CSS (battle.module.css: overdriveOverlay, defenderOverdriveGlow, bg_command_chamber keyframes + AEGIS-7 sprite).
 
 ---
 
