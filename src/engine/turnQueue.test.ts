@@ -24,10 +24,10 @@ describe('buildTurnQueue', () => {
 
   it('handles ties with stable sort (party first)', () => {
     const party = [c('TORC', 11)];
-    const enemies = [e('NETWORKER_ENFORCER', 11)];
+    const enemies = [e('NETWORKER_ENFORCER_A', 11)];
     const q = buildTurnQueue(party, enemies);
     expect(q[0]?.combatantId).toBe('TORC');
-    expect(q[1]?.combatantId).toBe('NETWORKER_ENFORCER');
+    expect(q[1]?.combatantId).toBe('NETWORKER_ENFORCER_A');
   });
 
   it('excludes defeated combatants', () => {
