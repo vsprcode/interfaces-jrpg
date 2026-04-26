@@ -66,9 +66,12 @@ INTRO → [FASE 1: DEADZONE solo] → [FASE 2: +TORC] → [FASE 3: +TRINETRA] �
 
 ## Requirements
 
-### Validated
+### Validated in Phase 1: Foundation & Pure Engine
 
-(None yet — ship to validate)
+- [x] Jogo roda em browser sem instalação (Next.js 14 + Vercel-ready build ✓)
+- [x] Estética pixel art "Blue Wave" — Tailwind v4 + Press Start 2P confirmados
+- [x] Battle engine em React state (sem lib) — `useReducer` + pure functions ✓
+- [x] IA inimiga básica scaffolded — `AI_BEHAVIORS` map com 4 estratégias ✓
 
 ### Active
 
@@ -114,4 +117,4 @@ Este documento evolui a cada transição de fase.
 4. Decisões a registrar? → Adicionar em Key Decisions
 
 ---
-*Last updated: 2026-04-25 — inicialização do projeto*
+*Last updated: 2026-04-26 — Phase 1 complete (foundation + pure engine)*
