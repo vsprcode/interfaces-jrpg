@@ -129,3 +129,14 @@
 .shake {
   animation: shake 200ms ease-in-out;
 }
+
+/* ── DEADZONE sprite animation states (UI-04) ─────────────────────────────── */
+/* data-state attribute on sprite wrapper drives visual feedback per action.
+ * Targets .sprite class inside SpriteFallback (sprite-fallback.module.css).
+ */
+
+[data-state="attack"] .sprite { transform: translateX(8px); transition: transform 100ms ease-out; }
+[data-state="hurt"]   .sprite { filter: brightness(2); transition: filter 100ms ease-out; }
+[data-state="defend"] .sprite { filter: saturate(0.5); transition: filter 100ms ease-out; }
+[data-state="skill"]  .sprite { filter: hue-rotate(60deg) brightness(1.5); transition: filter 100ms ease-out; }
+[data-state="idle"]   .sprite { transform: translateX(0); filter: none; }
