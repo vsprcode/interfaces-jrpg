@@ -79,6 +79,19 @@ export function DemoCompletedScreen({ onNewGame }: DemoCompletedScreenProps) {
         A resistência analógica persiste. O sistema ainda controla.
       </p>
 
+      <p
+        style={{
+          color: '#00bfff',
+          fontSize: '7px',
+          textAlign: 'center',
+          marginBottom: '32px',
+          letterSpacing: '0.06em',
+          opacity: 0.7,
+        }}
+      >
+        Próximo capítulo em breve...
+      </p>
+
       <button
         type="button"
         onClick={onNewGame}

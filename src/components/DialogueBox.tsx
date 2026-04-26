@@ -43,6 +43,7 @@ export function DialogueBox({ lines, onComplete }: DialogueBoxProps) {
       style={{ background: 'rgba(0,0,10,0.85)', fontFamily: 'var(--font-pixel), monospace', zIndex: 60, cursor: 'pointer' }}
       onClick={advance}
       role="dialog"
+      aria-modal="true"
       aria-label="dialogue"
     >
       <div
@@ -61,7 +62,7 @@ export function DialogueBox({ lines, onComplete }: DialogueBoxProps) {
         <p style={{ color: 'var(--color-text-glow)', fontSize: '7px', lineHeight: '1.8' }}>
           {line.text}
         </p>
-        <p style={{ color: '#444', fontSize: '6px', marginTop: '12px', textAlign: 'right' }}>
+        <p style={{ color: 'var(--color-text-glow)', fontSize: '6px', marginTop: '12px', textAlign: 'right' }}>
           {currentLine + 1}/{lines.length} ▶ CLIQUE OU ESPAÇO
         </p>
       </div>
