@@ -74,7 +74,7 @@ Plans:
 - [x] 03-04-PLAN.md — Wave 2: GameController + EncounterCompleteScreen + BattleScene parameterization
 - [x] 03-05-PLAN.md — Wave 3: Status badges in CharacterHUD + TurnOrderIndicator
 - [x] 03-06-PLAN.md — Wave 3: TRINETRA target picker in ActionMenu + DialogueBox component
-- [ ] 03-07-PLAN.md — Wave 4: Camera shake + SKILL effects + human verify checkpoint
+- [x] 03-07-PLAN.md — Wave 4: Camera shake + SKILL effects + human verify checkpoint
 **UI hint**: yes
 
 ### Phase 4: AEGIS-7 + OVERDRIVE Boss
