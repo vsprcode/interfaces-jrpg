@@ -82,14 +82,23 @@ INTRO → [FASE 1: DEADZONE solo] → [FASE 2: +TORC] → [FASE 3: +TRINETRA] �
 - [x] Animações de batalha: screen flash, floating damage numbers, HP bar drain ✓
 - [x] Encounter 1 completo e jogável (DEADZONE vs Casting Probe MK-I) — 91 testes ✓
 
+### Validated in Phase 3: Party Expansion (Encounters 2 & 3)
+
+- [x] Personagens do universo [In]terfaces: TORC (Forge Wall — DEF+8 group, 2T) + TRINETRA (System Override — heal/remove status) ✓
+- [x] IA inimiga real: TARGET_LOWEST_HP (Networker Enforcer) + ATTACK_RANDOM (Patrol Bot) ✓
+- [x] Status effect lifecycle: aplicação, decremento end-of-round, expiração ✓
+- [x] GameController: chain de 3 encontros com HP persistente entre encontros, EN reset ✓
+- [x] DialogueBox cinematic entre encontros (lore TORC/TRINETRA) ✓
+- [x] TurnOrderIndicator (SPD ordering) + status badges (CharacterHUD) ✓
+- [x] Camera shake em hits pesados + SKILL_SHIELD/SKILL_HEAL visual effects ✓
+- [x] Encounters 2 e 3 completos: DEADZONE+TORC vs 2 Enforcers; trio vs 3 Patrol Bots — 124 testes ✓
+
 ### Active
 
-- [ ] 4 encontros completos e jogáveis do início ao fim
+- [ ] Encounter 4 (boss AEGIS-7) completo e jogável do início ao fim
 - [ ] Mecânica OVERDRIVE do boss (aviso + death instantânea se não defender)
-- [ ] Status table em Markdown/tabela após cada turno
 - [ ] Tela DEMO COMPLETED
-- [ ] Narração cinematográfica em cada encontro
-- [ ] Personagens do universo [In]terfaces (TORC, TRINETRA — DEADZONE completo)
+- [ ] Status table em Markdown/tabela após cada turno
 
 ### Out of Scope
 
@@ -122,4 +131,4 @@ Este documento evolui a cada transição de fase.
 4. Decisões a registrar? → Adicionar em Key Decisions
 
 ---
-*Last updated: 2026-04-26 — Phase 2 complete (Encounter 1: DEADZONE solo — 91 tests green, browser playthrough UAT pending)*
+*Last updated: 2026-04-26 — Phase 3 complete (Encounters 2 & 3: TORC + TRINETRA, 124 tests green, browser UAT pending)*
