@@ -10,6 +10,7 @@ import { BattleLog } from '@/components/BattleLog';
 import { FloatingDamageNumber } from '@/components/FloatingDamageNumber';
 import { SpriteFallback } from '@/components/SpriteFallback';
 import { GameOverScreen } from '@/components/GameOverScreen';
+import { TurnOrderIndicator } from '@/components/TurnOrderIndicator';
 import type { Character, Enemy, CombatantId } from '@/engine/types';
 import styles from '@/styles/battle.module.css';
 
@@ -226,23 +227,32 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
       <div className="relative flex flex-col h-full" style={{ zIndex: 10 }}>
 
         {/* Enemy zone — EnemyPanel(s) satisfy UI-03 */}
-        <div className="flex-1 flex items-center justify-center gap-8 relative">
-          {state.enemies.map(enemy => (
-            <div key={enemy.id} className="relative">
-              <EnemyPanel enemy={enemy} />
-              {/* Floating damage numbers on each enemy */}
-              {popups
-                .filter(p => p.targetId === enemy.id)
-                .map(popup => (
-                  <FloatingDamageNumber
-                    key={popup.id}
-                    amount={popup.amount}
-                    isHeal={popup.isHeal}
-                    onDone={() => setPopups(prev => prev.filter(p => p.id !== popup.id))}
-                  />
-                ))}
-            </div>
-          ))}
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 relative">
+          {/* Turn order indicator — shows remaining queue from currentTurnIndex+1 (UI-08) */}
+          <TurnOrderIndicator
+            turnQueue={state.turnQueue}
+            currentTurnIndex={state.currentTurnIndex}
+            party={state.party}
+            enemies={state.enemies}
+          />
+          <div className="flex items-center justify-center gap-8 w-full">
+            {state.enemies.map(enemy => (
+              <div key={enemy.id} className="relative">
+                <EnemyPanel enemy={enemy} />
+                {/* Floating damage numbers on each enemy */}
+                {popups
+                  .filter(p => p.targetId === enemy.id)
+                  .map(popup => (
+                    <FloatingDamageNumber
+                      key={popup.id}
+                      amount={popup.amount}
+                      isHeal={popup.isHeal}
+                      onDone={() => setPopups(prev => prev.filter(p => p.id !== popup.id))}
+                    />
+                  ))}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Party zone — character sprites with animation states (UI-04, ASSETS-01) */}
