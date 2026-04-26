@@ -8,8 +8,8 @@ progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 25
-  completed_plans: 22
-  percent: 62
+  completed_plans: 23
+  percent: 65
 ---
 
 # STATE — [In]terfaces JRPG Demo
@@ -36,9 +36,9 @@ Plan: Not started
 | Field | Value |
 |-------|-------|
 | **Phase** | 4 — AEGIS-7 + OVERDRIVE Boss |
-| **Plan** | 04-01 complete (1/4) |
-| **Status** | Executing Phase 4 — Wave 0 done |
-| **Progress** | `[██████░░░░] 62% — 22/25 plans complete` |
+| **Plan** | 04-02 complete (2/4) |
+| **Status** | Executing Phase 4 — Wave 1 done |
+| **Progress** | `[██████░░░░] 65% — 23/25 plans complete` |
 
 ---
 
@@ -48,7 +48,7 @@ Plan: Not started
 |--------|--------|---------|
 | v1 requirements mapped | 76/76 | 76/76 ✓ |
 | Phases complete | 5/5 | 3/5 |
-| Vitest suite green | 100% | 124/124 ✓ |
+| Vitest suite green | 100% | 116/116 ✓ |
 | Lighthouse Performance | >= 80 | n/a |
 | Lighthouse Accessibility | >= 80 | n/a |
 | Production build clean | yes | ✓ (96.1 kB) |
@@ -100,9 +100,9 @@ None.
 - Read `.planning/phases/03-party-expansion-encounters-2-3/03-HUMAN-UAT.md` for pending Phase 3 browser UAT (19-step)
 - Read `.planning/phases/02-encounter-1-deadzone-solo/02-HUMAN-UAT.md` for pending Phase 2 browser UAT (14-step)
 
-**Last action (2026-04-26):** Phase 4 plan 04-01 complete — Wave 0 types + data foundation. BattlePhase extended with OVERDRIVE_WARNING/OVERDRIVE_RESOLVING, overdrivePending added to BattleState, AEGIS_7 exported (HP:200, ATK:28, DEF:15, SPD:8, OVERDRIVE_BOSS), ENCOUNTER_CONFIGS[3] wired (command_chamber). 102 tests green, tsc clean. Commit: 8ef5a9e.
+**Last action (2026-04-26):** Phase 4 plan 04-02 complete — Wave 1 OVERDRIVE engine. Replaced OVERDRIVE_BOSS stub with full TERMINUS AI; added three-way ACTION_RESOLVED routing (OVERDRIVE_RESOLVING / OVERDRIVE_WARNING / normal); expanded PLAYER_ACTION + ENEMY_ACTION phase guards. 13 new TDD tests (A-F AI, G-M reducer), 116 total green, tsc clean. Commits: c5717ec (Task 1), 4a502f0 (Task 2).
 
-**Next action:** Execute 04-02 — Wave 1 OVERDRIVE_BOSS AI logic + reducer switch cases.
+**Next action:** Execute 04-03 — Wave 2 OVERDRIVE UI (OVERDRIVE_WARNING overlay + DEFENDER glow + TERMINUS animation).
 
 ---
 
