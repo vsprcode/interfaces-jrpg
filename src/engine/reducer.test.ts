@@ -1546,4 +1546,70 @@ describe('battleReducer', () => {
       expect(nextAegisTurn.pendingAction!.animationType).toBe('OVERDRIVE_WARNING');
     });
   });
+
+  // NARR-05: ENCOUNTER_INIT_MESSAGES — encounter-specific lore lines replace generic 'Encontro iniciado.'
+  // Keys use the actual first-enemy id from each encounter (NETWORKER_ENFORCER_A, CASTING_PATROL_BOT_A).
+  describe('ENCOUNTER_INIT_MESSAGES', () => {
+    it('Test 1: INIT with CASTING_PROBE_MK1 → encounter-specific lore line', () => {
+      const next = battleReducer(initialBattleState, {
+        type: 'INIT',
+        payload: { party: [dz], enemies: [probe] },
+      });
+      expect(next.log[0]).toBe('DEADZONE infiltra o Corredor 7-A. Sensores detectam presença inimiga.');
+    });
+
+    it('Test 2: INIT with NETWORKER_ENFORCER_A → encounter-specific lore line', () => {
+      const enforcer: Enemy = {
+        kind: 'enemy', id: 'NETWORKER_ENFORCER_A', name: 'Networker Enforcer A',
+        hp: 55, maxHp: 55, en: 0, maxEn: 0, atk: 16, def: 8, spd: 11,
+        statusEffects: [], isDefeated: false, behavior: 'TARGET_LOWEST_HP',
+      };
+      const next = battleReducer(initialBattleState, {
+        type: 'INIT',
+        payload: { party: [dz], enemies: [enforcer] },
+      });
+      expect(next.log[0]).toBe('Docas de Carga. Dois Enforcers em patrulha. TORC assume posição de flanco.');
+    });
+
+    it('Test 3: INIT with CASTING_PATROL_BOT_A → encounter-specific lore line', () => {
+      const patrolBot: Enemy = {
+        kind: 'enemy', id: 'CASTING_PATROL_BOT_A', name: 'Casting Patrol Bot A',
+        hp: 45, maxHp: 45, en: 0, maxEn: 0, atk: 13, def: 7, spd: 9,
+        statusEffects: [], isDefeated: false, behavior: 'ATTACK_RANDOM',
+      };
+      const next = battleReducer(initialBattleState, {
+        type: 'INIT',
+        payload: { party: [dz], enemies: [patrolBot] },
+      });
+      expect(next.log[0]).toBe('Sala de Servidores. Três Patrol Bots em rotação automática. TRINETRA calibra o Override.');
+    });
+
+    it('Test 4: INIT with AEGIS_7 → encounter-specific lore line', () => {
+      const aegis: Enemy = {
+        kind: 'enemy', id: 'AEGIS_7', name: 'AEGIS-7',
+        hp: 200, maxHp: 200, en: 0, maxEn: 0, atk: 28, def: 15, spd: 8,
+        statusEffects: [], isDefeated: false, behavior: 'OVERDRIVE_BOSS',
+      };
+      const next = battleReducer(initialBattleState, {
+        type: 'INIT',
+        payload: { party: [dz], enemies: [aegis] },
+      });
+      expect(next.log[0]).toBe('Câmara de Comando. AEGIS-7 online. Protocolo de eliminação pesado ativado.');
+    });
+
+    it('Test 5: INIT with unknown enemy id → graceful fallback to Encontro iniciado.', () => {
+      // Cast through unknown to satisfy TypeScript — testing the runtime fallback path
+      const unknownEnemy = {
+        kind: 'enemy' as const, id: 'UNKNOWN_ENEMY' as Enemy['id'], name: 'Unknown',
+        hp: 40, maxHp: 40, en: 0, maxEn: 0, atk: 14, def: 6, spd: 10,
+        statusEffects: [] as Enemy['statusEffects'], isDefeated: false,
+        behavior: 'ALWAYS_ATTACK' as Enemy['behavior'],
+      };
+      const next = battleReducer(initialBattleState, {
+        type: 'INIT',
+        payload: { party: [dz], enemies: [unknownEnemy] },
+      });
+      expect(next.log[0]).toBe('Encontro iniciado.');
+    });
+  });
 });

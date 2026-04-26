@@ -16,6 +16,16 @@ export const initialBattleState: BattleState = {
   overdrivePending: false, // cleared on every new encounter (INIT resets via spread)
 };
 
+// NARR-05: Encounter-specific lore lines keyed by first enemy id.
+// Replaces the generic 'Encontro iniciado.' in the INIT case.
+// Unknown ids fall back to 'Encontro iniciado.' via ?? operator.
+const ENCOUNTER_INIT_MESSAGES: Partial<Record<string, string>> = {
+  'CASTING_PROBE_MK1':    'DEADZONE infiltra o Corredor 7-A. Sensores detectam presença inimiga.',
+  'NETWORKER_ENFORCER_A': 'Docas de Carga. Dois Enforcers em patrulha. TORC assume posição de flanco.',
+  'CASTING_PATROL_BOT_A': 'Sala de Servidores. Três Patrol Bots em rotação automática. TRINETRA calibra o Override.',
+  'AEGIS_7':              'Câmara de Comando. AEGIS-7 online. Protocolo de eliminação pesado ativado.',
+};
+
 /**
  * Pure reducer for battle state. Synchronous, deterministic, never throws.
  *
@@ -39,7 +49,7 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
         turnQueue,
         phase: 'PLAYER_INPUT',
         round: 1,
-        log: ['Encontro iniciado.'],
+        log: [ENCOUNTER_INIT_MESSAGES[enemies[0]?.id ?? ''] ?? 'Encontro iniciado.'],
       };
     }
 
