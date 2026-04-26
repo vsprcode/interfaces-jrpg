@@ -9,7 +9,7 @@ progress:
   completed_phases: 3
   total_plans: 21
   completed_plans: 21
-  percent: 100
+  percent: 60
 ---
 
 # STATE — [In]terfaces JRPG Demo
@@ -23,7 +23,7 @@ progress:
 
 **Core value:** Entregar uma experiência JRPG completa e polida em browser (4 batalhas + boss AEGIS-7) que sirva como vitrine do universo [In]terfaces para leitores/players sem contato prévio com o worldbuilding.
 
-**Current focus:** Phase 03 — party-expansion-encounters-2-3 (next)
+**Current focus:** Phase 04 — aegis-7-+-overdrive-boss (next)
 
 **Stack (locked):** Next.js 14 (App Router) + TypeScript strict + Tailwind v4 + `useReducer` (NOT Zustand) + CSS Modules for keyframes + Press Start 2P via `next/font/google` + Vitest 2 + Vercel.
 
@@ -35,10 +35,10 @@ Phase: 4
 Plan: Not started
 | Field | Value |
 |-------|-------|
-| **Phase** | 3 — Party Expansion (Encounters 2 & 3) |
-| **Plan** | 03-01 (Wave 0 — ready to execute) |
-| **Status** | Phase 3 planned (7 plans, 5 waves) — ready to execute |
-| **Progress** | `[████░░░░░░] 40% — 2/5 phases complete (Phase 3 planned)` |
+| **Phase** | 4 — AEGIS-7 + OVERDRIVE Boss |
+| **Plan** | Not started |
+| **Status** | Phase 3 complete — ready to plan Phase 4 |
+| **Progress** | `[██████░░░░] 60% — 3/5 phases complete` |
 
 ---
 
@@ -47,11 +47,11 @@ Plan: Not started
 | Metric | Target | Current |
 |--------|--------|---------|
 | v1 requirements mapped | 76/76 | 76/76 ✓ |
-| Phases complete | 5/5 | 2/5 |
-| Vitest suite green | 100% | 91/91 ✓ |
+| Phases complete | 5/5 | 3/5 |
+| Vitest suite green | 100% | 124/124 ✓ |
 | Lighthouse Performance | >= 80 | n/a |
 | Lighthouse Accessibility | >= 80 | n/a |
-| Production build clean | yes | ✓ (92.9 kB) |
+| Production build clean | yes | ✓ (96.1 kB) |
 
 ---
 
@@ -67,13 +67,14 @@ Plan: Not started
 | Five pitfall guardrails encoded as Phase 1 ground rules | Strict Mode, gameStateRef, no shallow mutations, phase guard, `'use client'` — all neutralized before any UI code | Phase 1 |
 | OVERDRIVE as a two-phase state extension | `OVERDRIVE_WARNING` → `OVERDRIVE_RESOLVING` is a distinct state machine extension, not a special-case action — fairness via telegraphing | Phase 4 |
 | Polish last, not threaded | Separating engine (P1-4) from aesthetics (P5) keeps regression testing tractable | Phase 5 |
+| GameController for encounter chain | BattleScene parameterized; GameController owns encounter index, HP carry, EN reset, party injection — clean separation of concerns | Phase 3 |
+| Per-actor SKILL_EN_COSTS map | Hardcoded `en >= 8` was wrong for TORC (costs 6) and TRINETRA (costs 10) — map keyed by actor.id fixes gate | Phase 3 (CR-02) |
 
 ### Open Todos
 
 - [ ] Human browser UAT for Phase 2: `npm run dev` → 14-step checklist in `02-HUMAN-UAT.md`
+- [ ] Human browser UAT for Phase 3: `npm run dev` → 19-step checklist in `03-HUMAN-UAT.md`
 - [ ] Confirm audio policy with owner (current default: no audio)
-- [ ] Decide on optional `DISRUPTED` status effect (4th status) during Phase 3 planning
-- [x] Phase 3 code review WR-01/WR-02 fix: encoded in Plan 03-01 Task 1
 
 ### Active Blockers
 
@@ -86,6 +87,7 @@ None.
 3. **Shallow spread mutations** — every reducer case touching combatants uses `.map(c => c.id === target ? { ...c, hp: ... } : c)`
 4. **Turn race conditions** — reducer's first guard on every player action: `if (state.phase !== 'PLAYER_INPUT') return state;`
 5. **SSR hydration mismatch** — every battle component is `'use client'`; `Math.random()` only inside `useEffect` or reducer actions
+6. **OVERDRIVE Phase 4 pitfall** — `OVERDRIVE_WARNING` → `OVERDRIVE_RESOLVING` is a 2-phase state extension; any PLAYER_ACTION in `OVERDRIVE_WARNING` must route to OVERDRIVE_RESOLVING, not normal RESOLVING
 
 ---
 
@@ -95,12 +97,12 @@ None.
 
 - Read `.planning/ROADMAP.md` for full phase breakdown
 - Read `.planning/PROJECT.md` for character stats, mechanics, lore
-- Read `.planning/phases/02-encounter-1-deadzone-solo/02-HUMAN-UAT.md` for pending browser UAT checklist
-- Read `.planning/phases/02-encounter-1-deadzone-solo/02-REVIEW.md` for code review warnings to fix in Phase 3
+- Read `.planning/phases/03-party-expansion-encounters-2-3/03-HUMAN-UAT.md` for pending Phase 3 browser UAT (19-step)
+- Read `.planning/phases/02-encounter-1-deadzone-solo/02-HUMAN-UAT.md` for pending Phase 2 browser UAT (14-step)
 
-**Last action (2026-04-26):** Phase 2 complete — 6/6 plans executed, 91 tests green, TypeScript + build clean. BattleScene fully wired: DEADZONE solo vs Casting Probe MK-I playable end-to-end.
+**Last action (2026-04-26):** Phase 3 complete — 7/7 plans executed, 124 tests green, TypeScript + build clean (96.1 kB). Full encounter chain (E1→E2→E3) wired: DEADZONE+TORC+TRINETRA, GameController, DialogueBox, TurnOrderIndicator, status badges, camera shake, skill visual effects.
 
-**Next action:** `/gsd-execute-phase 3` — start with Plan 03-01 (Wave 0).
+**Next action:** `/gsd-plan-phase 4` — AEGIS-7 boss encounter + OVERDRIVE mechanic.
 
 ---
 
