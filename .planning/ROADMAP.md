@@ -66,7 +66,15 @@
   2. Player casts `[Forge Wall]` and sees a SHIELD status icon on both party members with a 2-turn countdown that decrements and expires correctly; Networker Enforcers visibly target the lowest-HP ally (announced in battle log)
   3. After Encounter 2 victory, TRINETRA joins for Encounter 3 vs. 3 Casting Patrol Bots; player can cast `[System Override]` to either heal 30 HP OR remove a status — target selection works; Patrol Bots pick random live targets
   4. `TurnOrderIndicator` displays the upcoming turn queue based on SPD; camera-shake animation fires on heavy hits without layout thrashing
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+- [ ] 03-01-PLAN.md — Wave 0: WR-01/02/03/04 bug fixes + types + TORC/TRINETRA/enemy data + encounter configs
+- [ ] 03-02-PLAN.md — Wave 1: Forge Wall (TORC) + System Override (TRINETRA) skills + status lifecycle [TDD]
+- [ ] 03-03-PLAN.md — Wave 1: TARGET_LOWEST_HP + ATTACK_RANDOM AI behaviors [TDD]
+- [ ] 03-04-PLAN.md — Wave 2: GameController + EncounterCompleteScreen + BattleScene parameterization
+- [ ] 03-05-PLAN.md — Wave 3: Status badges in CharacterHUD + TurnOrderIndicator
+- [ ] 03-06-PLAN.md — Wave 3: TRINETRA target picker in ActionMenu + DialogueBox component
+- [ ] 03-07-PLAN.md — Wave 4: Camera shake + SKILL effects + human verify checkpoint
 **UI hint**: yes
 
 ### Phase 4: AEGIS-7 + OVERDRIVE Boss
@@ -101,7 +109,7 @@
 |-------|----------------|--------|-----------|
 | 1. Foundation & Pure Engine | 8/8 | Complete | 2026-04-26 |
 | 2. Encounter 1 — DEADZONE Solo | 0/6 | Planned | - |
-| 3. Party Expansion (E2 & E3) | 0/0 | Not started | - |
+| 3. Party Expansion (E2 & E3) | 0/7 | Planned | - |
 | 4. AEGIS-7 + OVERDRIVE Boss | 0/0 | Not started | - |
 | 5. Polish, Narrative & Demo | 0/0 | Not started | - |
 
@@ -146,4 +154,4 @@ If any AI-generated asset blocks a phase, the CSS fallback from ASSETS-07 ships 
 
 ---
 
-*Last updated: 2026-04-26 — Phase 2 planned (6 plans, 4 waves).*
+*Last updated: 2026-04-26 — Phase 3 planned (7 plans, 5 waves).*

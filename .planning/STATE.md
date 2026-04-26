@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-04-26T15:26:10.509Z"
+last_updated: "2026-04-26T16:00:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 14
+  total_plans: 21
   completed_plans: 14
-  percent: 100
+  percent: 67
 ---
 
 # STATE — [In]terfaces JRPG Demo
@@ -36,9 +36,9 @@ Plan: Not started
 | Field | Value |
 |-------|-------|
 | **Phase** | 3 — Party Expansion (Encounters 2 & 3) |
-| **Plan** | Not started — awaiting `/gsd-plan-phase 3` |
-| **Status** | Phase 2 complete, ready to plan Phase 3 |
-| **Progress** | `[████░░░░░░] 40% — 2/5 phases complete` |
+| **Plan** | 03-01 (Wave 0 — ready to execute) |
+| **Status** | Phase 3 planned (7 plans, 5 waves) — ready to execute |
+| **Progress** | `[████░░░░░░] 40% — 2/5 phases complete (Phase 3 planned)` |
 
 ---
 
@@ -73,7 +73,7 @@ Plan: Not started
 - [ ] Human browser UAT for Phase 2: `npm run dev` → 14-step checklist in `02-HUMAN-UAT.md`
 - [ ] Confirm audio policy with owner (current default: no audio)
 - [ ] Decide on optional `DISRUPTED` status effect (4th status) during Phase 3 planning
-- [ ] Phase 3 code review WR-01/WR-02 fix: phase-transition holes in defeated-enemy skip paths (reducer.ts:241-248, 259-271)
+- [x] Phase 3 code review WR-01/WR-02 fix: encoded in Plan 03-01 Task 1
 
 ### Active Blockers
 
@@ -100,7 +100,7 @@ None.
 
 **Last action (2026-04-26):** Phase 2 complete — 6/6 plans executed, 91 tests green, TypeScript + build clean. BattleScene fully wired: DEADZONE solo vs Casting Probe MK-I playable end-to-end.
 
-**Next action:** `/gsd-plan-phase 3` to plan party expansion (Encounters 2 & 3 — TORC joins, then TRINETRA joins).
+**Next action:** `/gsd-execute-phase 3` — start with Plan 03-01 (Wave 0).
 
 ---
 
