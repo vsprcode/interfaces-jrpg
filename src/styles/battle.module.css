@@ -1,0 +1,131 @@
+/* battle.module.css
+ * CSS Module for battle UI animations and layout.
+ * All colors via CSS custom properties from globals.css @theme (VISUAL-01).
+ * Keyframe animations: CSS Modules only (CLAUDE.md convention).
+ */
+
+/* BG_corridor placeholder — CSS gradient (ASSETS-03)
+ * Real background asset deferred to Phase 5; gradient uses Blue Wave palette vars.
+ */
+.battleBackground {
+  background: linear-gradient(
+    180deg,
+    var(--color-shadow-cold, #0a0a1a) 0%,
+    #0d1a2e 60%,
+    var(--color-bg-dark, #050510) 100%
+  );
+}
+
+/* ── HP bar (UI-10, VISUAL-07) ────────────────────────────────────────────── */
+
+.hpBarTrack {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hpBarFill {
+  height: 100%;
+  background: var(--color-electric, #00bfff);
+  /* CSS transition — replays automatically on every hp value change (UI-10) */
+  transition: width 600ms ease-out;
+  border-radius: 2px;
+}
+
+/* HP threshold color shifts — applied via JS className composition */
+.hpWarning {
+  background: var(--color-warning, #ffd700);
+}
+
+.hpCritical {
+  background: var(--color-danger, #ff1744);
+}
+
+/* ── EN bar ───────────────────────────────────────────────────────────────── */
+
+.enBarTrack {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.enBarFill {
+  height: 100%;
+  background: var(--color-cyan-neon, #00ffff);
+  transition: width 600ms ease-out;
+  border-radius: 2px;
+}
+
+/* ── DEFENDER status badge ────────────────────────────────────────────────── */
+
+.defendingBadge {
+  display: inline-block;
+  font-size: 8px;
+  padding: 1px 4px;
+  background: var(--color-electric, #00bfff);
+  color: var(--color-bg-dark, #050510);
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Screen flash overlay (VISUAL-03) ────────────────────────────────────── */
+/* Variant toggle pattern: .flashA and .flashB share the same @keyframes
+ * but alternate class names so React diffs the DOM, restarting the animation
+ * on every hit (prevents animation-not-replaying on consecutive crits).
+ */
+
+@keyframes flash {
+  0%, 100% { opacity: 0; }
+  20%, 80%  { opacity: 0.6; }
+}
+
+.flashA {
+  animation: flash 200ms ease-in-out;
+  pointer-events: none;
+}
+
+.flashB {
+  animation: flash 200ms ease-in-out;
+  pointer-events: none;
+}
+
+/* ── Floating damage number (UI-09) ──────────────────────────────────────── */
+/* key={popup.id} rotation forces remount on every hit, restarting animation
+ * from frame 0 (Pitfall 12 / animation re-trigger pattern from research).
+ */
+
+@keyframes floatDamage {
+  0%   { transform: translateY(0);     opacity: 1; }
+  100% { transform: translateY(-48px); opacity: 0; }
+}
+
+.damageNumber {
+  animation: floatDamage 700ms ease-out forwards;
+  position: absolute;
+  pointer-events: none;
+  color: var(--color-electric, #00bfff);
+  font-size: 14px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.damageNumberHeal {
+  color: var(--color-cyan-neon, #00ffff);
+}
+
+/* ── Camera shake (VISUAL-03 variant) ────────────────────────────────────── */
+
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0); }
+  25%       { transform: translate(-4px, 2px); }
+  75%       { transform: translate(4px, -2px); }
+}
+
+.shake {
+  animation: shake 200ms ease-in-out;
+}
