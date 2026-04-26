@@ -29,14 +29,14 @@
   4. The five pitfall guardrails are encoded as repeatable patterns in `src/engine/`: (a) every `useEffect` cleans timers, (b) `gameStateRef` mirrors state for deferred reads, (c) reducers use `.map()`+spread for combatant updates, (d) reducer drops out-of-phase dispatches, (e) every battle component is `'use client'` with no random in render
   5. `next build` produces a clean production build with no TypeScript or Strict Mode warnings
 **Plans**: 8 plans
-- [ ] 01-01-PLAN.md — Project Scaffold (Next.js 14 + TS strict + folders + Strict Mode)
-- [ ] 01-02-PLAN.md — Style & Font Foundation (Tailwind v4/v3 fallback + Blue Wave + Press Start 2P)
-- [ ] 01-03-PLAN.md — Test Infrastructure (Vitest 2 config + npm scripts)
-- [ ] 01-04-PLAN.md — Engine Types & Pure Functions (types.ts + calculateDamage + buildTurnQueue with mutation regression)
-- [ ] 01-05-PLAN.md — Reducer & Phase Machine (battleReducer + phase guard + useGameStateRef hook)
-- [ ] 01-06-PLAN.md — Enemy AI Skeleton (Record map + defensive throw + minimal src/data/)
-- [ ] 01-07-PLAN.md — BattleScene Shell + Sprite Fallback ('use client' + Strict Mode safe useEffect + ASSETS-07)
-- [ ] 01-08-PLAN.md — Production Build & Coverage Validation (final verification + VALIDATION.md sign-off)
+- [x] 01-01-PLAN.md — Project Scaffold (Next.js 14 + TS strict + folders + Strict Mode)
+- [x] 01-02-PLAN.md — Style & Font Foundation (Tailwind v4/v3 fallback + Blue Wave + Press Start 2P)
+- [x] 01-03-PLAN.md — Test Infrastructure (Vitest 2 config + npm scripts)
+- [x] 01-04-PLAN.md — Engine Types & Pure Functions (types.ts + calculateDamage + buildTurnQueue with mutation regression)
+- [x] 01-05-PLAN.md — Reducer & Phase Machine (battleReducer + phase guard + useGameStateRef hook)
+- [x] 01-06-PLAN.md — Enemy AI Skeleton (Record map + defensive throw + minimal src/data/)
+- [x] 01-07-PLAN.md — BattleScene Shell + Sprite Fallback ('use client' + Strict Mode safe useEffect + ASSETS-07)
+- [x] 01-08-PLAN.md — Production Build & Coverage Validation (final verification + VALIDATION.md sign-off)
 **UI hint**: yes
 
 ### Phase 2: Encounter 1 — DEADZONE Solo
