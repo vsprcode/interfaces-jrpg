@@ -86,7 +86,12 @@ Plans:
   2. Player who uses `[DEFENDER]` on every alive character survives the next-turn TERMINUS (999 dmg only hits non-defenders); `[DEFENDER]` works during OVERDRIVE even with EN = 0
   3. Vitest suite covers OVERDRIVE edge cases: party already wiped before warning → direct GAME_OVER; dead character not targeted by TERMINUS; AEGIS cannot announce + fire OVERDRIVE in the same turn (1-turn telegraph minimum)
   4. Defeating AEGIS-7 triggers `DEMO COMPLETED` screen with ASCII-art, a working `NOVA INFILTRAÇÃO` button, and a clean reset to title via React `key` prop
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 04-01-PLAN.md — Wave 0: Types + Data Foundation (BattlePhase extension, overdrivePending, AEGIS_7, ENCOUNTER_CONFIGS[3])
+- [ ] 04-02-PLAN.md — Wave 1: OVERDRIVE Engine TDD (reducer phase transitions + OVERDRIVE_BOSS AI + 12 edge-case tests)
+- [ ] 04-03-PLAN.md — Wave 2: OVERDRIVE UI + DemoCompletedScreen (overlay, DEFENDER glow, E4 GameController flow)
+- [ ] 04-04-PLAN.md — Wave 3: CSS Visual Polish + QA (overdrivePulse, defenderGlow, command_chamber bg, human verify)
 **UI hint**: yes
 
 ### Phase 5: Polish, Narrative & Demo Completion
@@ -110,7 +115,7 @@ Plans:
 | 1. Foundation & Pure Engine | 8/8 | Complete | 2026-04-26 |
 | 2. Encounter 1 — DEADZONE Solo | 0/6 | Planned | - |
 | 3. Party Expansion (E2 & E3) | 7/7 | Complete    | 2026-04-26 |
-| 4. AEGIS-7 + OVERDRIVE Boss | 0/0 | Not started | - |
+| 4. AEGIS-7 + OVERDRIVE Boss | 0/4 | Planned | - |
 | 5. Polish, Narrative & Demo | 0/0 | Not started | - |
 
 ---
@@ -154,4 +159,4 @@ If any AI-generated asset blocks a phase, the CSS fallback from ASSETS-07 ships 
 
 ---
 
-*Last updated: 2026-04-26 — Phase 3 planned (7 plans, 5 waves).*
+*Last updated: 2026-04-26 — Phase 4 planned (4 plans, 4 waves).*
