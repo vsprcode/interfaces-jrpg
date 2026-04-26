@@ -46,3 +46,17 @@ const patrolBotBase = {
 export const CASTING_PATROL_BOT_A: Enemy = { ...patrolBotBase, id: 'CASTING_PATROL_BOT_A' };
 export const CASTING_PATROL_BOT_B: Enemy = { ...patrolBotBase, id: 'CASTING_PATROL_BOT_B' };
 export const CASTING_PATROL_BOT_C: Enemy = { ...patrolBotBase, id: 'CASTING_PATROL_BOT_C' };
+
+// AEGIS-7 | Fase 4 (x1) | HP 200 | ATK 28 | DEF 15 | SPD 8 | OVERDRIVE_BOSS
+export const AEGIS_7: Enemy = {
+  kind: 'enemy',
+  id: 'AEGIS_7',
+  name: 'AEGIS-7',
+  hp: 200, maxHp: 200,
+  en: 0, maxEn: 0,
+  atk: 28, def: 15, spd: 8,
+  statusEffects: [],
+  isDefeated: false,
+  behavior: 'OVERDRIVE_BOSS',
+  isOverdriveActive: false,
+};

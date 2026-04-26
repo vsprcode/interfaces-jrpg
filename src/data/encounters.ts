@@ -4,6 +4,7 @@ import {
   CASTING_PROBE_MK1,
   NETWORKER_ENFORCER_A, NETWORKER_ENFORCER_B,
   CASTING_PATROL_BOT_A, CASTING_PATROL_BOT_B, CASTING_PATROL_BOT_C,
+  AEGIS_7,
 } from '@/data/enemies';
 
 export type EncounterBackground = 'corridor' | 'loading_dock' | 'server_room' | 'command_chamber';
@@ -36,5 +37,11 @@ export const ENCOUNTER_CONFIGS: EncounterConfig[] = [
     party: [DEADZONE, TORC, TRINETRA],
     enemies: [CASTING_PATROL_BOT_A, CASTING_PATROL_BOT_B, CASTING_PATROL_BOT_C],
     newPartyMember: TRINETRA,
+  },
+  {
+    index: 3,
+    background: 'command_chamber',
+    party: [DEADZONE, TORC, TRINETRA], // full trio; HP carries from E3
+    enemies: [AEGIS_7],
   },
 ];

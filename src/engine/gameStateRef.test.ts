@@ -20,6 +20,7 @@ function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
     pendingAction: null,
     log: [],
     items: { nanoMed: 1 },
+    overdrivePending: false,
     ...overrides,
   };
 }

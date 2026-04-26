@@ -13,6 +13,7 @@ export const initialBattleState: BattleState = {
   pendingAction: null,
   log: [],
   items: { nanoMed: 3 },
+  overdrivePending: false, // cleared on every new encounter (INIT resets via spread)
 };
 
 /**

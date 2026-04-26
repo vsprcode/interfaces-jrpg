@@ -75,6 +75,8 @@ export type BattlePhase =
   | 'PLAYER_INPUT'
   | 'RESOLVING'
   | 'ENEMY_TURN'
+  | 'OVERDRIVE_WARNING'   // AEGIS-7 announced TERMINUS — player chooses DEFEND
+  | 'OVERDRIVE_RESOLVING' // AEGIS-7 fires TERMINUS — reducer applies 999 damage
   | 'VICTORY'
   | 'GAME_OVER';
 
@@ -125,6 +127,7 @@ export interface BattleState {
   pendingAction: ResolvedAction | null;
   log: string[];
   items: { nanoMed: number };
+  overdrivePending: boolean; // true after AEGIS-7 announces TERMINUS (cleared on INIT)
 }
 
 // ── Reducer action union ──────────────────────────────────────────────────
