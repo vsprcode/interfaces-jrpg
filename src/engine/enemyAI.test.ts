@@ -336,3 +336,132 @@ describe('ATTACK_RANDOM real implementation (AI-04)', () => {
     expect(result.description).toBe('(no targets)');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────
+// OVERDRIVE_BOSS AI implementation (Phase 4 Plan 04-02 — Tests A-F)
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('OVERDRIVE_BOSS AI implementation (OVERDRIVE-01/04/06/08)', () => {
+  // Shared AEGIS_7 fixture (imported from data — canonical stats)
+  // We construct minimal state objects via object spread for each test.
+  const aegis: Enemy = {
+    kind: 'enemy', id: 'AEGIS_7', name: 'AEGIS-7',
+    hp: 200, maxHp: 200, en: 0, maxEn: 0, atk: 28, def: 15, spd: 8,
+    statusEffects: [], isDefeated: false, behavior: 'OVERDRIVE_BOSS',
+    isOverdriveActive: false,
+  };
+
+  const aliveChar: Character = {
+    kind: 'player', id: 'DEADZONE', name: 'DEADZONE',
+    hp: 95, maxHp: 95, en: 25, maxEn: 25, atk: 22, def: 10, spd: 18,
+    statusEffects: [], isDefeated: false, isDefending: false,
+  };
+
+  // Test A: hp<100, ENEMY_TURN, overdrivePending=false → OVERDRIVE_WARNING announcement (OVERDRIVE-01)
+  it('Test A: AEGIS_7 hp=99 in ENEMY_TURN with overdrivePending=false → animationType OVERDRIVE_WARNING, no hpDelta', () => {
+    const aegisLowHp = { ...aegis, hp: 99 };
+    const state: BattleState = {
+      ...initialBattleState,
+      phase: 'ENEMY_TURN',
+      party: [aliveChar],
+      enemies: [aegisLowHp],
+      overdrivePending: false,
+    };
+    const result = AI_BEHAVIORS['OVERDRIVE_BOSS'](aegisLowHp, state);
+    expect(result.animationType).toBe('OVERDRIVE_WARNING');
+    expect(result.hpDelta).toBeUndefined();
+  });
+
+  // Test B: hp<100, ENEMY_TURN, overdrivePending=true → normal ATTACK (no second warning) (OVERDRIVE-08)
+  it('Test B: AEGIS_7 hp=99 in ENEMY_TURN with overdrivePending=true → animationType ATTACK with hpDelta (no second OVERDRIVE_WARNING)', () => {
+    const aegisLowHp = { ...aegis, hp: 99 };
+    const state: BattleState = {
+      ...initialBattleState,
+      phase: 'ENEMY_TURN',
+      party: [aliveChar],
+      enemies: [aegisLowHp],
+      overdrivePending: true,
+    };
+    const result = AI_BEHAVIORS['OVERDRIVE_BOSS'](aegisLowHp, state);
+    expect(result.animationType).toBe('ATTACK');
+    expect(result.hpDelta).toBeDefined();
+    expect(result.hpDelta!.length).toBeGreaterThan(0);
+  });
+
+  // Test C: OVERDRIVE_RESOLVING, alive non-defending target → OVERDRIVE_TERMINUS with -999 (OVERDRIVE-04)
+  it('Test C: AEGIS_7 hp=99 in OVERDRIVE_RESOLVING, party=[alive non-defender] → animationType OVERDRIVE_TERMINUS, hpDelta includes -999', () => {
+    const aegisLowHp = { ...aegis, hp: 99 };
+    const nonDefender: Character = { ...aliveChar, isDefending: false };
+    const state: BattleState = {
+      ...initialBattleState,
+      phase: 'OVERDRIVE_RESOLVING',
+      party: [nonDefender],
+      enemies: [aegisLowHp],
+      overdrivePending: true,
+    };
+    const result = AI_BEHAVIORS['OVERDRIVE_BOSS'](aegisLowHp, state);
+    expect(result.animationType).toBe('OVERDRIVE_TERMINUS');
+    expect(result.hpDelta).toBeDefined();
+    expect(result.hpDelta!.length).toBe(1);
+    expect(result.hpDelta![0]!.amount).toBe(-999);
+    expect(result.hpDelta![0]!.targetId).toBe('DEADZONE');
+  });
+
+  // Test D: OVERDRIVE_RESOLVING, one defending + one not → hpDelta only for non-defender (OVERDRIVE-04 + OVERDRIVE-06)
+  it('Test D: AEGIS_7 in OVERDRIVE_RESOLVING, party=[{isDefending:true},{isDefending:false}] → hpDelta only includes the non-defending member', () => {
+    const aegisLowHp = { ...aegis, hp: 99 };
+    const defender: Character = {
+      kind: 'player', id: 'TORC', name: 'TORC',
+      hp: 130, maxHp: 130, en: 20, maxEn: 20, atk: 18, def: 20, spd: 12,
+      statusEffects: [], isDefeated: false, isDefending: true,
+    };
+    const nonDefender: Character = { ...aliveChar, isDefending: false };
+    const state: BattleState = {
+      ...initialBattleState,
+      phase: 'OVERDRIVE_RESOLVING',
+      party: [defender, nonDefender],
+      enemies: [aegisLowHp],
+      overdrivePending: true,
+    };
+    const result = AI_BEHAVIORS['OVERDRIVE_BOSS'](aegisLowHp, state);
+    expect(result.animationType).toBe('OVERDRIVE_TERMINUS');
+    expect(result.hpDelta).toBeDefined();
+    // Only DEADZONE (non-defender) should appear in hpDelta
+    expect(result.hpDelta!.length).toBe(1);
+    expect(result.hpDelta![0]!.targetId).toBe('DEADZONE');
+    // TORC (defender) must NOT be in hpDelta
+    const torcInDelta = result.hpDelta!.some(d => d.targetId === 'TORC');
+    expect(torcInDelta).toBe(false);
+  });
+
+  // Test E: OVERDRIVE_RESOLVING, all defeated → terminusTargets empty, hpDelta [] (OVERDRIVE-06)
+  it('Test E: AEGIS_7 in OVERDRIVE_RESOLVING, party=[{isDefeated:true}] → terminusTargets empty, hpDelta is empty array', () => {
+    const aegisLowHp = { ...aegis, hp: 99 };
+    const defeatedChar: Character = { ...aliveChar, isDefeated: true };
+    const state: BattleState = {
+      ...initialBattleState,
+      phase: 'OVERDRIVE_RESOLVING',
+      party: [defeatedChar],
+      enemies: [aegisLowHp],
+      overdrivePending: true,
+    };
+    const result = AI_BEHAVIORS['OVERDRIVE_BOSS'](aegisLowHp, state);
+    expect(result.animationType).toBe('OVERDRIVE_TERMINUS');
+    expect(result.hpDelta).toBeDefined();
+    expect(result.hpDelta!.length).toBe(0);
+  });
+
+  // Test F: hp=150, ENEMY_TURN → normal ATTACK (above 100 HP threshold, no OVERDRIVE)
+  it('Test F: AEGIS_7 hp=150 in ENEMY_TURN → animationType ATTACK (above 100 HP threshold)', () => {
+    const aegisHighHp = { ...aegis, hp: 150 };
+    const state: BattleState = {
+      ...initialBattleState,
+      phase: 'ENEMY_TURN',
+      party: [aliveChar],
+      enemies: [aegisHighHp],
+      overdrivePending: false,
+    };
+    const result = AI_BEHAVIORS['OVERDRIVE_BOSS'](aegisHighHp, state);
+    expect(result.animationType).toBe('ATTACK');
+  });
+});

@@ -84,8 +84,54 @@ export const AI_BEHAVIORS: Record<EnemyBehaviorType, AIFn> = {
     };
   },
 
-  // Phase 4 implements OVERDRIVE_BOSS
-  OVERDRIVE_BOSS: (enemy, state) => stubAction(enemy, state, 'overdrive_boss stub'),
+  // Phase 4 Plan 04-02: OVERDRIVE_BOSS full implementation
+  OVERDRIVE_BOSS: (enemy, state) => {
+    // Mode 1: OVERDRIVE_RESOLVING — fire TERMINUS (runs BEFORE no-targets guard)
+    // TERMINUS fires even if all are defeated (GAME_OVER should have fired first, but hpDelta
+    // is empty array in that case — Test E verifies this). Dead targets excluded by !isDefeated
+    // which was already applied to build validTargets; then defenders excluded by !isDefending.
+    if (state.phase === 'OVERDRIVE_RESOLVING') {
+      const validTargets = state.party.filter(c => !c.isDefeated);
+      const terminusTargets = validTargets.filter(c => !c.isDefending);
+      return {
+        actorId: enemy.id,
+        description: 'AEGIS-7 dispara TERMINUS — protocolo de eliminação em cascata',
+        hpDelta: terminusTargets.map(c => ({ targetId: c.id, amount: -999 as number })),
+        animationType: 'OVERDRIVE_TERMINUS' as const,
+      };
+    }
+
+    // For non-OVERDRIVE_RESOLVING modes, require alive targets
+    const validTargets = state.party.filter(c => !c.isDefeated);
+    if (validTargets.length === 0) {
+      console.error('OVERDRIVE_BOSS: no valid targets — GAME_OVER should have fired first');
+      return { actorId: enemy.id, description: '(no targets)', animationType: 'ATTACK' as const };
+    }
+
+    // Mode 2: ENEMY_TURN — announce OR normal attack
+    // OVERDRIVE-08: only announce when HP < 100 AND overdrivePending is false (no double-announce)
+    if (enemy.hp < 100 && !state.overdrivePending) {
+      return {
+        actorId: enemy.id,
+        description: 'AEGIS-7 SOBRECARREGA OS SERVOS — TERMINUS CARREGANDO',
+        animationType: 'OVERDRIVE_WARNING' as const,
+      };
+    }
+
+    // Normal attack on first alive target
+    const target = validTargets[0]!;
+    const dmg = calculateDamage(enemy, target, {
+      damageMultiplier: target.isDefending ? 0.5 : 1.0,
+    });
+    return {
+      actorId: enemy.id,
+      description: target.isDefending
+        ? `AEGIS-7 varre o setor com canhão de plasma — ${target.name} absorve — ${dmg} de dano`
+        : `AEGIS-7 varre o setor com canhão de plasma — ${target.name} sob ataque — ${dmg} de dano`,
+      hpDelta: [{ targetId: target.id, amount: -dmg }],
+      animationType: 'ATTACK' as const,
+    };
+  },
 };
 
 function stubAction(enemy: Enemy, state: BattleState, label: string): ResolvedAction {
