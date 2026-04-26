@@ -1,5 +1,6 @@
-import type { BattleState, Action } from './types';
+import type { BattleState, Action, ResolvedAction } from './types';
 import { buildTurnQueue } from './turnQueue';
+import { calculateDamage } from './damage';
 
 export const initialBattleState: BattleState = {
   phase: 'INIT',
@@ -46,30 +47,192 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
         return state;
       }
 
-      return {
-        ...state,
-        phase: 'RESOLVING',
-        pendingAction: {
-          actorId: action.payload.actorId,
-          description: `${action.payload.actorId} executes ${action.payload.type}.`,
-          animationType: 'ATTACK',
-        },
-        log: [...state.log, `${action.payload.actorId} → ${action.payload.type}`],
-      };
+      const { type: actionType, actorId, targetId } = action.payload;
+      const actor = state.party.find(c => c.id === actorId)!;
+
+      // Clear isDefending at the start of this actor's turn (A1: clear at dispatch)
+      // T-02-02-03: isDefending cleared before any action to prevent stale persisting flag
+      const partyCleared = state.party.map(c =>
+        c.id === actorId ? { ...c, isDefending: false } : c
+      );
+
+      switch (actionType) {
+        case 'ATTACK': {
+          const target = state.enemies.find(e => e.id === targetId)!;
+          const dmg = calculateDamage(actor, target);
+          const resolved: ResolvedAction = {
+            actorId: actor.id,
+            description: `DEADZONE encontra brecha no firewall — ${dmg} de dano`,
+            hpDelta: [{ targetId: target.id, amount: -dmg }],
+            animationType: 'ATTACK',
+          };
+          return {
+            ...state,
+            party: partyCleared,
+            phase: 'RESOLVING',
+            pendingAction: resolved,
+            log: [...state.log, resolved.description],
+          };
+        }
+
+        case 'DEFEND': {
+          // T-02-02-03: isDefending set on actor immediately; cleared next turn
+          // Pitfall D: DEFEND has NO EN check — always available
+          const enRecovery = Math.min(5, actor.maxEn - actor.en);
+          const resolved: ResolvedAction = {
+            actorId: actor.id,
+            description: 'DEADZONE ativa postura de contenção analógica — recupera 5 EN',
+            enDelta: enRecovery > 0 ? [{ targetId: actor.id, amount: enRecovery }] : [],
+            animationType: 'DEFEND',
+          };
+          // Set isDefending: true on actor directly (so it's available for AI's damageMultiplier check)
+          const partyDefending = partyCleared.map(c =>
+            c.id === actorId ? { ...c, isDefending: true } : c
+          );
+          return {
+            ...state,
+            party: partyDefending,
+            phase: 'RESOLVING',
+            pendingAction: resolved,
+            log: [...state.log, resolved.description],
+          };
+        }
+
+        case 'ITEM': {
+          // T-02-02-02: Guard against exhausted inventory
+          if (state.items.nanoMed <= 0) return state;
+          const healTarget = state.party.find(c => c.id === (targetId ?? actorId))!;
+          // Pitfall E: clamp heal amount to available HP headroom
+          const healAmount = Math.min(30, healTarget.maxHp - healTarget.hp);
+          const resolved: ResolvedAction = {
+            actorId: actor.id,
+            description: `DEADZONE injeta Nano-Med — restaura ${healAmount} HP`,
+            hpDelta: [{ targetId: healTarget.id, amount: healAmount }],
+            animationType: 'ITEM',
+          };
+          return {
+            ...state,
+            party: partyCleared,
+            phase: 'RESOLVING',
+            pendingAction: resolved,
+            items: { ...state.items, nanoMed: state.items.nanoMed - 1 },
+            log: [...state.log, resolved.description],
+          };
+        }
+
+        case 'SKILL': {
+          // Implemented in Plan 03 (Signal Null)
+          // SKILL-04: if EN < 8 cost, return same reference (no-op)
+          const EN_COST = 8;
+          if (actor.en < EN_COST) return state;
+          // Plan 03 will replace this stub with real Signal Null logic
+          return state;
+        }
+      }
     }
 
     case 'ACTION_RESOLVED': {
       if (state.phase !== 'RESOLVING') return state;
+      if (!state.pendingAction) return { ...state, phase: 'PLAYER_INPUT' };
+
+      const { hpDelta, enDelta } = state.pendingAction;
+
+      let newParty = state.party;
+      let newEnemies = state.enemies;
+
+      // Apply HP deltas to both party and enemies
+      // T-02-02-01: HP always clamped via Math.max(0, Math.min(maxHp, hp + delta))
+      if (hpDelta) {
+        for (const delta of hpDelta) {
+          newParty = newParty.map(c => {
+            if (c.id !== delta.targetId) return c;
+            const newHp = Math.max(0, Math.min(c.maxHp, c.hp + delta.amount));
+            return { ...c, hp: newHp, isDefeated: newHp <= 0 };
+          });
+          newEnemies = newEnemies.map(e => {
+            if (e.id !== delta.targetId) return e;
+            const newHp = Math.max(0, e.hp + delta.amount);
+            return { ...e, hp: newHp, isDefeated: newHp <= 0 };
+          });
+        }
+      }
+
+      // Apply EN deltas (party only)
+      if (enDelta) {
+        for (const delta of enDelta) {
+          newParty = newParty.map(c => {
+            if (c.id !== delta.targetId) return c;
+            return { ...c, en: Math.max(0, Math.min(c.maxEn, c.en + delta.amount)) };
+          });
+        }
+      }
+
+      // T-02-02-04: Check end conditions BEFORE advancing queue (Pitfall C)
+      if (newEnemies.every(e => e.isDefeated)) {
+        return {
+          ...state,
+          party: newParty,
+          enemies: newEnemies,
+          pendingAction: null,
+          phase: 'VICTORY',
+          log: [...state.log, 'Probe MK-I neutralizada. Corredor 7-A desobstruído.'],
+        };
+      }
+      if (newParty.every(c => c.isDefeated)) {
+        return {
+          ...state,
+          party: newParty,
+          enemies: newEnemies,
+          pendingAction: null,
+          phase: 'GAME_OVER',
+          log: [...state.log, 'DEADZONE eliminada. A resistência analógica recua.'],
+        };
+      }
+
+      // Advance turn queue
+      const nextIndex = state.currentTurnIndex + 1;
+      if (nextIndex >= state.turnQueue.length) {
+        // End of round — rebuild queue for new round
+        const newQueue = buildTurnQueue(newParty, newEnemies);
+        const nextEntry = newQueue[0];
+        const nextPhase = nextEntry!.kind === 'player' ? 'PLAYER_INPUT' : 'ENEMY_TURN';
+        return {
+          ...state,
+          party: newParty,
+          enemies: newEnemies,
+          turnQueue: newQueue,
+          currentTurnIndex: 0,
+          round: state.round + 1,
+          pendingAction: null,
+          phase: nextPhase,
+        };
+      }
+
+      const nextEntry = state.turnQueue[nextIndex];
+      const nextPhase = nextEntry!.kind === 'player' ? 'PLAYER_INPUT' : 'ENEMY_TURN';
       return {
         ...state,
+        party: newParty,
+        enemies: newEnemies,
+        currentTurnIndex: nextIndex,
         pendingAction: null,
-        phase: 'PLAYER_INPUT',
+        phase: nextPhase,
       };
     }
 
     case 'ENEMY_ACTION': {
       if (state.phase !== 'ENEMY_TURN') return state;
-      return { ...state, phase: 'RESOLVING' };
+      // Full AI call wired in Plan 03. For now, keep this case structured for Plan 03 to drop in.
+      // Plan 03 will import resolveEnemyAction and replace this stub.
+      return {
+        ...state,
+        phase: 'RESOLVING',
+        pendingAction: {
+          actorId: action.payload.enemyId,
+          description: 'enemy acts',
+          animationType: 'ATTACK',
+        },
+      };
     }
 
     case 'NEXT_TURN': {
