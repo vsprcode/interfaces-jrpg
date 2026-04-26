@@ -73,20 +73,23 @@ INTRO → [FASE 1: DEADZONE solo] → [FASE 2: +TORC] → [FASE 3: +TRINETRA] �
 - [x] Battle engine em React state (sem lib) — `useReducer` + pure functions ✓
 - [x] IA inimiga básica scaffolded — `AI_BEHAVIORS` map com 4 estratégias ✓
 
+### Validated in Phase 2: Encounter 1 — DEADZONE Solo
+
+- [x] Sistema de menus por turno funcional ([ATACAR] [HABILIDADE] [DEFENDER] [ITEM]) — ActionMenu com keyboard shortcuts A/S/D/I ✓
+- [x] Habilidades únicas: Signal Null (DEADZONE) — defPenetration:0.7, custo 8 EN ✓
+- [x] IA inimiga básica com comportamentos diferenciados — ALWAYS_ATTACK implementado ✓
+- [x] Tela de Game Over e retry (battleKey React key reset) ✓
+- [x] Animações de batalha: screen flash, floating damage numbers, HP bar drain ✓
+- [x] Encounter 1 completo e jogável (DEADZONE vs Casting Probe MK-I) — 91 testes ✓
+
 ### Active
 
-- [ ] Jogo roda em browser sem instalação (Next.js + Vercel)
 - [ ] 4 encontros completos e jogáveis do início ao fim
-- [ ] Sistema de menus por turno funcional ([ATACAR] [HABILIDADE] [DEFENDER] [ITEM])
-- [ ] Habilidades únicas para cada personagem com custo de EN
-- [ ] IA inimiga básica com comportamentos diferenciados
 - [ ] Mecânica OVERDRIVE do boss (aviso + death instantânea se não defender)
 - [ ] Status table em Markdown/tabela após cada turno
-- [ ] Tela de Game Over e DEMO COMPLETED
-- [ ] Estética pixel art "Blue Wave" (neons azuis, fonte Press Start 2P)
-- [ ] Animações de batalha (flash, tremor de câmera, efeitos de habilidade)
+- [ ] Tela DEMO COMPLETED
 - [ ] Narração cinematográfica em cada encontro
-- [ ] Personagens do universo [In]terfaces (DEADZONE, TORC, TRINETRA)
+- [ ] Personagens do universo [In]terfaces (TORC, TRINETRA — DEADZONE completo)
 
 ### Out of Scope
 
@@ -101,10 +104,12 @@ INTRO → [FASE 1: DEADZONE solo] → [FASE 2: +TORC] → [FASE 3: +TRINETRA] �
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Next.js + React (sem Phaser/Unity) | Web-first, zero instalação, deploy rápido no Vercel | — Pending |
-| CSS animations (sem sprite sheets externos) | Evita assets pesados; estética pixel art via CSS é suficiente para demo | — Pending |
-| Battle engine em React state (sem lib) | Controle total, sem overhead, demo simples não precisa de game engine completa | — Pending |
+| Next.js + React (sem Phaser/Unity) | Web-first, zero instalação, deploy rápido no Vercel | ✓ Confirmado |
+| CSS animations (sem sprite sheets externos) | Evita assets pesados; estética pixel art via CSS é suficiente para demo | ✓ Confirmado |
+| Battle engine em React state (sem lib) | Controle total, sem overhead, demo simples não precisa de game engine completa | ✓ Confirmado |
 | Lore [In]terfaces adaptado (não original) | Aproveita worldbuilding existente, dá profundidade sem criar do zero | ✓ Confirmado |
+| useRef(false) para INIT guard | Strict Mode double-fire no desenvolvimento — `useRef(false)` previne duplo dispatch | ✓ Confirmado Phase 2 |
+| stateRef para callbacks assíncronos | Closures em setTimeout capturam estado antigo — `useGameStateRef` mirror resolve | ✓ Confirmado Phase 2 |
 
 ## Evolution
 
@@ -117,4 +122,4 @@ Este documento evolui a cada transição de fase.
 4. Decisões a registrar? → Adicionar em Key Decisions
 
 ---
-*Last updated: 2026-04-26 — Phase 1 complete (foundation + pure engine)*
+*Last updated: 2026-04-26 — Phase 2 complete (Encounter 1: DEADZONE solo — 91 tests green, browser playthrough UAT pending)*
