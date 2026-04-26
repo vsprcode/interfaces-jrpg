@@ -1,8 +1,14 @@
 'use client';
 
 import React from 'react';
-import type { Character } from '@/engine/types';
+import type { Character, StatusEffectType } from '@/engine/types';
 import styles from '@/styles/battle.module.css';
+
+const STATUS_ICON_MAP: Record<StatusEffectType, string> = {
+  DEF_BUFF: 'SHIELD',
+  OVERDRIVE_CHARGE: 'TERMINUS',
+  DEFENDING: 'GUARD',
+};
 
 interface CharacterHUDProps {
   character: Character;
@@ -71,6 +77,21 @@ export function CharacterHUD({ character }: CharacterHUDProps) {
           {character.en}/{character.maxEn}
         </span>
       </div>
+
+      {/* Status effects row — ASSETS-06 (CSS text icons) */}
+      {character.statusEffects.length > 0 && (
+        <div className={styles.statusRow}>
+          {character.statusEffects.map((effect, i) => (
+            <span
+              key={`${effect.type}-${i}`}
+              className={styles.statusBadge}
+              data-type={effect.type}
+            >
+              {STATUS_ICON_MAP[effect.type]} {effect.turnsRemaining}T
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
