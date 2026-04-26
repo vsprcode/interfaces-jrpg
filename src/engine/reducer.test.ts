@@ -142,8 +142,8 @@ describe('battleReducer', () => {
       party: [dz], enemies: [probe],
       phase: 'PLAYER_INPUT',
       turnQueue: [
-        { combatantId: 'DEADZONE', speed: 18 },
-        { combatantId: 'CASTING_PROBE_MK1', speed: 10 },
+        { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+        { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
       ],
       currentTurnIndex: 0,
       round: 1,
@@ -158,7 +158,7 @@ describe('battleReducer', () => {
       ...initialBattleState,
       party: [dz], enemies: [probe],
       phase: 'PLAYER_INPUT',
-      turnQueue: [{ combatantId: 'DEADZONE', speed: 18 }],
+      turnQueue: [{ combatantId: 'DEADZONE', kind: 'player', spd: 18 }],
       currentTurnIndex: 0,
       round: 1,
     };

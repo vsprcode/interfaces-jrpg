@@ -26,11 +26,13 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
   switch (action.type) {
     case 'INIT': {
       const { party, enemies } = action.payload;
-      const turnQueue = buildTurnQueue(party, enemies);
+      const clonedParty = party.map(c => ({ ...c }));
+      const clonedEnemies = enemies.map(e => ({ ...e }));
+      const turnQueue = buildTurnQueue(clonedParty, clonedEnemies);
       return {
         ...initialBattleState,
-        party,
-        enemies,
+        party: clonedParty,
+        enemies: clonedEnemies,
         turnQueue,
         phase: 'PLAYER_INPUT',
         round: 1,
