@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AI_BEHAVIORS, resolveEnemyAction } from './enemyAI';
+import { calculateDamage } from './damage';
 import { initialBattleState } from './reducer';
 import type { Enemy, Character, BattleState, EnemyBehaviorType } from './types';
 
@@ -158,5 +159,86 @@ describe('ALWAYS_ATTACK real implementation (AI-02)', () => {
     };
     const result = AI_BEHAVIORS['ALWAYS_ATTACK'](probe, state);
     expect(result.hpDelta![0]!.targetId).toBe('TORC');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// TARGET_LOWEST_HP real implementation (AI-03)
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('TARGET_LOWEST_HP real implementation (AI-03)', () => {
+  const enforcerA: Enemy = {
+    kind: 'enemy', id: 'NETWORKER_ENFORCER_A', name: 'Networker Enforcer',
+    hp: 55, maxHp: 55, en: 0, maxEn: 0, atk: 16, def: 8, spd: 11,
+    statusEffects: [], isDefeated: false, behavior: 'TARGET_LOWEST_HP',
+  };
+  const dzLowHp: Character = {
+    kind: 'player', id: 'DEADZONE', name: 'DEADZONE',
+    hp: 30, maxHp: 95, en: 25, maxEn: 25, atk: 22, def: 10, spd: 18,
+    statusEffects: [], isDefeated: false, isDefending: false,
+  };
+  const torc: Character = {
+    kind: 'player', id: 'TORC', name: 'TORC',
+    hp: 80, maxHp: 130, en: 20, maxEn: 20, atk: 18, def: 20, spd: 12,
+    statusEffects: [], isDefeated: false, isDefending: false,
+  };
+
+  it('TARGET_LOWEST_HP: selects party member with lowest HP', () => {
+    // DEADZONE(hp:30) < TORC(hp:80) — should target DEADZONE
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [dzLowHp, torc],
+      enemies: [enforcerA],
+    };
+    const result = AI_BEHAVIORS['TARGET_LOWEST_HP'](enforcerA, state);
+    expect(result.hpDelta).toBeDefined();
+    expect(result.hpDelta).toHaveLength(1);
+    expect(result.hpDelta![0]!.targetId).toBe('DEADZONE');
+  });
+
+  it('TARGET_LOWEST_HP: applies 0.5 damage multiplier when target is defending', () => {
+    const dzDefending = { ...dzLowHp, isDefending: true };
+    const dzNotDefending = { ...dzLowHp, isDefending: false };
+
+    const stateDefending: BattleState = {
+      ...initialBattleState,
+      party: [dzDefending, torc],
+      enemies: [enforcerA],
+    };
+    const stateNotDefending: BattleState = {
+      ...initialBattleState,
+      party: [dzNotDefending, torc],
+      enemies: [enforcerA],
+    };
+
+    const defendingResult = AI_BEHAVIORS['TARGET_LOWEST_HP'](enforcerA, stateDefending);
+    const attackResult = AI_BEHAVIORS['TARGET_LOWEST_HP'](enforcerA, stateNotDefending);
+
+    // Attacking result must deal more damage than defending result
+    expect(Math.abs(attackResult.hpDelta![0]!.amount)).toBeGreaterThan(
+      Math.abs(defendingResult.hpDelta![0]!.amount)
+    );
+  });
+
+  it('TARGET_LOWEST_HP: returns no-op when all party defeated', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [{ ...dzLowHp, isDefeated: true }],
+      enemies: [enforcerA],
+    };
+    expect(() => AI_BEHAVIORS['TARGET_LOWEST_HP'](enforcerA, state)).not.toThrow();
+    const result = AI_BEHAVIORS['TARGET_LOWEST_HP'](enforcerA, state);
+    expect(result.description).toBe('(no targets)');
+  });
+
+  it('TARGET_LOWEST_HP: includes battle-log description mentioning target name', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [dzLowHp, torc],
+      enemies: [enforcerA],
+    };
+    const result = AI_BEHAVIORS['TARGET_LOWEST_HP'](enforcerA, state);
+    // DEADZONE is the lowest-HP target
+    expect(result.description).toContain('DEADZONE');
   });
 });

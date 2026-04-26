@@ -40,8 +40,30 @@ export const AI_BEHAVIORS: Record<EnemyBehaviorType, AIFn> = {
     };
   },
 
-  // Phase 3 implements TARGET_LOWEST_HP and ATTACK_RANDOM
-  TARGET_LOWEST_HP: (enemy, state) => stubAction(enemy, state, 'target_lowest_hp stub'),
+  // Phase 3 Plan 03-03: TARGET_LOWEST_HP real implementation (AI-03)
+  TARGET_LOWEST_HP: (enemy, state) => {
+    const validTargets = state.party.filter(c => !c.isDefeated);
+    if (validTargets.length === 0) {
+      console.error('TARGET_LOWEST_HP: no valid targets — GAME_OVER should have fired first');
+      return { actorId: enemy.id, description: '(no targets)', animationType: 'ATTACK' };
+    }
+    // Sort ascending by hp — first entry is lowest HP alive party member (AI-03)
+    const target = [...validTargets].sort((a, b) => a.hp - b.hp)[0]!;
+    const dmg = calculateDamage(enemy, target, {
+      damageMultiplier: target.isDefending ? 0.5 : 1.0,
+    });
+    const description = target.isDefending
+      ? `${enemy.name} mira no alvo mais vulnerável — ${target.name} absorve o impacto — ${dmg} de dano`
+      : `${enemy.name} mira no alvo mais vulnerável — ${target.name} sob ataque — ${dmg} de dano`;
+    return {
+      actorId: enemy.id,
+      description,
+      hpDelta: [{ targetId: target.id, amount: -dmg }],
+      animationType: 'ATTACK',
+    };
+  },
+
+  // Phase 3 Plan 03-03: ATTACK_RANDOM real implementation (AI-04) — implemented below
   ATTACK_RANDOM: (enemy, state) => stubAction(enemy, state, 'attack_random stub'),
 
   // Phase 4 implements OVERDRIVE_BOSS
