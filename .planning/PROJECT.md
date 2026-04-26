@@ -131,4 +131,4 @@ Este documento evolui a cada transição de fase.
 4. Decisões a registrar? → Adicionar em Key Decisions
 
 ---
-*Last updated: 2026-04-26 — Phase 3 complete (Encounters 2 & 3: TORC + TRINETRA, 124 tests green, browser UAT pending)*
+*Last updated: 2026-04-26 — Phase 5 complete. All 5 phases done. 155 tests green, 98.2 kB build, Lighthouse 100/100. Live at https://interfaces-jrpg.vercel.app*
