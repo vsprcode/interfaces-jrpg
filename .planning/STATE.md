@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-25T22:00:11.348Z"
+last_updated: "2026-04-26T04:09:25.029Z"
 progress:
   total_phases: 5
   completed_phases: 0
@@ -15,7 +15,7 @@ progress:
 # STATE — [In]terfaces JRPG Demo
 
 **Last updated:** 2026-04-25
-**Status:** Ready to execute
+**Status:** Executing Phase 01
 
 ---
 
@@ -23,7 +23,7 @@ progress:
 
 **Core value:** Entregar uma experiência JRPG completa e polida em browser (4 batalhas + boss AEGIS-7) que sirva como vitrine do universo [In]terfaces para leitores/players sem contato prévio com o worldbuilding.
 
-**Current focus:** Phase 1 — Foundation & Pure Engine. Goal: a typed, Vitest-tested battle engine and a `BattleScene` skeleton with all five critical pitfall guardrails encoded as ground rules before any UI work begins.
+**Current focus:** Phase 01 — foundation-pure-engine
 
 **Stack (locked):** Next.js 14 (App Router) + TypeScript strict + Tailwind v4 (with v3 fallback) + `useReducer` (NOT Zustand) + CSS Modules for keyframes + Press Start 2P via `next/font/google` + Vitest 2 + Vercel.
 
@@ -31,6 +31,8 @@ progress:
 
 ## Current Position
 
+Phase: 01 (foundation-pure-engine) — EXECUTING
+Plan: 1 of 8
 | Field | Value |
 |-------|-------|
 | **Phase** | 1 — Foundation & Pure Engine |
