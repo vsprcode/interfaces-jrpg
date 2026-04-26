@@ -34,13 +34,15 @@ describe('AI_BEHAVIORS map (AI-01)', () => {
     }
   });
 
-  it('AI throws when no valid targets (defensive — Pitfall 9)', () => {
+  it('AI returns no-op action when no valid targets (WR-03: defensive guard, no throw)', () => {
     const state: BattleState = {
       ...initialBattleState,
       party: [{ ...dz, isDefeated: true }],
       enemies: [probe],
     };
-    expect(() => resolveEnemyAction(probe, state)).toThrow();
+    expect(() => resolveEnemyAction(probe, state)).not.toThrow();
+    const result = resolveEnemyAction(probe, state);
+    expect(result.description).toBe('(no targets)');
   });
 
   it('does NOT mutate state', () => {
@@ -48,6 +50,44 @@ describe('AI_BEHAVIORS map (AI-01)', () => {
     const snap = JSON.stringify(state);
     resolveEnemyAction(probe, state);
     expect(JSON.stringify(state)).toBe(snap);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// WR-03: AI stubs must NOT throw when no valid targets exist
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('WR-03: AI stubs return no-op action instead of throwing when no valid targets', () => {
+  it('TARGET_LOWEST_HP: returns no-op action when no valid targets (does not throw)', () => {
+    const enforcerA: Enemy = {
+      kind: 'enemy', id: 'NETWORKER_ENFORCER_A', name: 'Networker Enforcer',
+      hp: 55, maxHp: 55, en: 0, maxEn: 0, atk: 16, def: 8, spd: 11,
+      statusEffects: [], isDefeated: false, behavior: 'TARGET_LOWEST_HP',
+    };
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [{ ...dz, isDefeated: true }],
+      enemies: [enforcerA],
+    };
+    expect(() => AI_BEHAVIORS['TARGET_LOWEST_HP'](enforcerA, state)).not.toThrow();
+    const result = AI_BEHAVIORS['TARGET_LOWEST_HP'](enforcerA, state);
+    expect(result.description).toBe('(no targets)');
+  });
+
+  it('ATTACK_RANDOM: returns no-op action when no valid targets (does not throw)', () => {
+    const patrolBot: Enemy = {
+      kind: 'enemy', id: 'CASTING_PATROL_BOT_A', name: 'Casting Patrol Bot',
+      hp: 45, maxHp: 45, en: 0, maxEn: 0, atk: 13, def: 7, spd: 9,
+      statusEffects: [], isDefeated: false, behavior: 'ATTACK_RANDOM',
+    };
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [{ ...dz, isDefeated: true }],
+      enemies: [patrolBot],
+    };
+    expect(() => AI_BEHAVIORS['ATTACK_RANDOM'](patrolBot, state)).not.toThrow();
+    const result = AI_BEHAVIORS['ATTACK_RANDOM'](patrolBot, state);
+    expect(result.description).toBe('(no targets)');
   });
 });
 
@@ -92,13 +132,15 @@ describe('ALWAYS_ATTACK real implementation (AI-02)', () => {
     expect(result.animationType).toBe('ATTACK');
   });
 
-  it('throws when no valid targets exist (all party defeated)', () => {
+  it('returns no-op when no valid targets exist — WR-03: no throw (all party defeated)', () => {
     const state: BattleState = {
       ...initialBattleState,
       party: [{ ...dz, isDefeated: true }],
       enemies: [probe],
     };
-    expect(() => AI_BEHAVIORS['ALWAYS_ATTACK'](probe, state)).toThrow();
+    expect(() => AI_BEHAVIORS['ALWAYS_ATTACK'](probe, state)).not.toThrow();
+    const result = AI_BEHAVIORS['ALWAYS_ATTACK'](probe, state);
+    expect(result.description).toBe('(no targets)');
   });
 
   it('skips defeated party members and targets first alive one', () => {

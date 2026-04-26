@@ -854,4 +854,139 @@ describe('battleReducer', () => {
       expect(next.pendingAction!.actorId).toBe('CASTING_PROBE_MK1');
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // WR-01: ENEMY_ACTION skip of defeated enemy must set correct next phase
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('WR-01: ENEMY_ACTION skip of defeated enemy transitions to correct phase', () => {
+    it('WR-01: ENEMY_ACTION skip of defeated enemy transitions to PLAYER_INPUT when next queue entry is player', () => {
+      // Queue: [player(idx0), enemy_a(idx1), player(idx2), enemy_b(idx3)]
+      // currentTurnIndex=1, enemy_a is defeated → skip → next is idx2 (player) → PLAYER_INPUT
+      const enforcerA: Enemy = {
+        kind: 'enemy', id: 'NETWORKER_ENFORCER_A', name: 'Networker Enforcer A',
+        hp: 55, maxHp: 55, en: 0, maxEn: 0, atk: 16, def: 8, spd: 11,
+        statusEffects: [], isDefeated: true, behavior: 'TARGET_LOWEST_HP',
+      };
+      const enforcerB: Enemy = {
+        kind: 'enemy', id: 'NETWORKER_ENFORCER_B', name: 'Networker Enforcer B',
+        hp: 55, maxHp: 55, en: 0, maxEn: 0, atk: 16, def: 8, spd: 11,
+        statusEffects: [], isDefeated: false, behavior: 'TARGET_LOWEST_HP',
+      };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz],
+        enemies: [enforcerA, enforcerB],
+        phase: 'ENEMY_TURN',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'NETWORKER_ENFORCER_A', kind: 'enemy', spd: 11 },
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'NETWORKER_ENFORCER_B', kind: 'enemy', spd: 11 },
+        ],
+        currentTurnIndex: 1,
+        round: 1,
+      };
+      const next = battleReducer(state, {
+        type: 'ENEMY_ACTION',
+        payload: { enemyId: 'NETWORKER_ENFORCER_A' },
+      });
+      expect(next.phase).toBe('PLAYER_INPUT');
+      expect(next.currentTurnIndex).toBe(2);
+    });
+
+    it('WR-01: ENEMY_ACTION skip at end-of-round transitions to PLAYER_INPUT if first next-round entry is player', () => {
+      // Queue has 2 entries; currentTurnIndex=1 (last), enemy at idx1 is defeated
+      // → end of round → rebuild queue → first entry is player → PLAYER_INPUT
+      const probeDefeated = { ...probe, isDefeated: true };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz],
+        enemies: [probeDefeated],
+        phase: 'ENEMY_TURN',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1,
+        round: 1,
+      };
+      const next = battleReducer(state, {
+        type: 'ENEMY_ACTION',
+        payload: { enemyId: 'CASTING_PROBE_MK1' },
+      });
+      expect(next.phase).toBe('PLAYER_INPUT');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // WR-02: NEXT_TURN must set correct next phase based on queue entry kind
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('WR-02: NEXT_TURN sets phase from queue entry kind', () => {
+    it('WR-02: NEXT_TURN with next entry = player produces PLAYER_INPUT', () => {
+      // Queue: [enemy(idx0), player(idx1)]; currentTurnIndex=0 → next is idx1 (player) → PLAYER_INPUT
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe],
+        phase: 'ENEMY_TURN',
+        turnQueue: [
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+        ],
+        currentTurnIndex: 0,
+        round: 1,
+      };
+      const next = battleReducer(state, { type: 'NEXT_TURN' });
+      expect(next.phase).toBe('PLAYER_INPUT');
+      expect(next.currentTurnIndex).toBe(1);
+    });
+
+    it('WR-02: NEXT_TURN at end-of-round rebuilds queue and sets PLAYER_INPUT if first entry is player', () => {
+      // Queue has 1 entry (enemy at idx0); currentTurnIndex=0 → end of round
+      // → rebuild: DEADZONE(spd18) comes first → PLAYER_INPUT
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz], enemies: [probe],
+        phase: 'ENEMY_TURN',
+        turnQueue: [
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        round: 1,
+      };
+      const next = battleReducer(state, { type: 'NEXT_TURN' });
+      expect(next.phase).toBe('PLAYER_INPUT');
+      expect(next.round).toBe(2);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // WR-04: enemy HP clamped to maxHp on positive hpDelta in ACTION_RESOLVED
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('WR-04: enemy HP clamped to maxHp on positive hpDelta', () => {
+    it('WR-04: enemy HP cannot exceed maxHp when applying a positive hpDelta', () => {
+      // Enemy at hp=40/maxHp=40; pendingAction hpDelta +10 → hp stays at 40 (not 50)
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz],
+        enemies: [probe], // hp=40, maxHp=40
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'heal enemy (edge case)',
+          hpDelta: [{ targetId: 'CASTING_PROBE_MK1', amount: +10 }],
+          animationType: 'ITEM',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      expect(next.enemies[0]!.hp).toBe(40); // clamped at maxHp, not 50
+    });
+  });
 });

@@ -21,7 +21,8 @@ export const AI_BEHAVIORS: Record<EnemyBehaviorType, AIFn> = {
   ALWAYS_ATTACK: (enemy, state) => {
     const validTargets = state.party.filter(c => !c.isDefeated);
     if (validTargets.length === 0) {
-      throw new Error('ALWAYS_ATTACK: no valid targets — GAME_OVER should have fired first');
+      console.error('ALWAYS_ATTACK: no valid targets — GAME_OVER should have fired first');
+      return { actorId: enemy.id, description: '(no targets)', animationType: 'ATTACK' };
     }
     const target = validTargets[0]!; // first alive party member (deterministic, AI-02)
     const dmg = calculateDamage(enemy, target, {
@@ -48,13 +49,15 @@ export const AI_BEHAVIORS: Record<EnemyBehaviorType, AIFn> = {
 };
 
 function stubAction(enemy: Enemy, state: BattleState, label: string): ResolvedAction {
-  // Defensive: validate at least one valid target exists (Pitfall 9)
+  // WR-03: return no-op instead of throwing when no valid targets exist
+  // GAME_OVER should have fired before reaching here, but guard defensively
   const validTargets = state.party.filter(c => !c.isDefeated);
   if (validTargets.length === 0) {
-    throw new Error(`AI ${label}: no valid targets — caller must dispatch GAME_OVER first`);
+    console.error(`AI ${label}: no valid targets — GAME_OVER should have fired first`);
+    return { actorId: enemy.id, description: '(no targets)', animationType: 'ATTACK' };
   }
 
-  // Phase 1 stub: stable placeholder action so the reducer can be tested.
+  // Phase 3 stub: stable placeholder action so the reducer can be tested.
   return {
     actorId: enemy.id,
     description: `${enemy.name} acts (${label})`,

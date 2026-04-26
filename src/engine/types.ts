@@ -4,8 +4,11 @@
 export type CharacterId = 'DEADZONE' | 'TORC' | 'TRINETRA';
 export type EnemyId =
   | 'CASTING_PROBE_MK1'
-  | 'NETWORKER_ENFORCER'
-  | 'CASTING_PATROL_BOT'
+  | 'NETWORKER_ENFORCER_A'
+  | 'NETWORKER_ENFORCER_B'
+  | 'CASTING_PATROL_BOT_A'
+  | 'CASTING_PATROL_BOT_B'
+  | 'CASTING_PATROL_BOT_C'
   | 'AEGIS_7';
 export type CombatantId = CharacterId | EnemyId;
 
@@ -108,6 +111,7 @@ export interface PlayerAction {
   type: PlayerActionType;
   actorId: CharacterId;
   targetId?: CombatantId;
+  skillVariant?: 'HEAL' | 'REMOVE_STATUS';
 }
 
 // ── Top-level battle state ────────────────────────────────────────────────
