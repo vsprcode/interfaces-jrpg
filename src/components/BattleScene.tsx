@@ -56,6 +56,7 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
   const popupCounter = useRef(0);
   const [flashVariant, setFlashVariant] = useState<'a' | 'b'>('a');
   const [shakeVariant, setShakeVariant] = useState<'a' | 'b'>('a');
+  const [overdriveVariant, setOverdriveVariant] = useState<'a' | 'b'>('a');
   const [skillEffect, setSkillEffect] = useState<'none' | 'shield' | 'heal'>('none');
   const [skillEffectKey, setSkillEffectKey] = useState(0);
 
@@ -127,10 +128,19 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
     return () => clearTimeout(timer);
   }, [state.phase, state.pendingAction, stateRef]);
 
+  // ── Toggle overdriveVariant when phase enters OVERDRIVE_WARNING (OVERDRIVE-02, VISUAL-06) ──
+  // Same A/B toggle pattern as flashVariant/shakeVariant — forces DOM re-create to restart animation
+  useEffect(() => {
+    if (state.phase === 'OVERDRIVE_WARNING') {
+      setOverdriveVariant(v => v === 'a' ? 'b' : 'a');
+    }
+  }, [state.phase]);
+
   // ── ENEMY_TURN useEffect: dispatch ENEMY_ACTION after 600ms beat delay ──────
   // clearTimeout cleanup prevents Strict Mode double-fire (T-02-06-01, Pitfall F)
+  // Also handles OVERDRIVE_RESOLVING phase (TERMINUS fires as an enemy action)
   useEffect(() => {
-    if (state.phase !== 'ENEMY_TURN') return;
+    if (state.phase !== 'ENEMY_TURN' && state.phase !== 'OVERDRIVE_RESOLVING') return;
 
     const currentEntry = state.turnQueue[state.currentTurnIndex];
     if (!currentEntry) return;
@@ -144,7 +154,7 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
     const timer = setTimeout(() => {
       // Read FRESH state via ref (Pitfall 2, T-02-06-02 — stale closure prevention)
       const current = stateRef.current;
-      if (current.phase === 'ENEMY_TURN') {
+      if (current.phase === 'ENEMY_TURN' || current.phase === 'OVERDRIVE_RESOLVING') {
         dispatch({ type: 'ENEMY_ACTION', payload: { enemyId: enemy.id } });
       }
     }, 600);
@@ -239,12 +249,14 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
   const shakeClass = shakeVariant === 'a' ? styles.shakeA : styles.shakeB;
 
   // Background variant by encounter index (ASSETS-03)
-  const bgVariants = ['corridor', 'loading_dock', 'server_room'] as const;
+  // command_chamber added for encounterIndex 3 (AEGIS-7 boss fight) — CSS class added in Wave 3
+  const bgVariants = ['corridor', 'loading_dock', 'server_room', 'command_chamber'] as const;
   const bgKey = bgVariants[encounterIndex] ?? 'corridor';
   const bgClass = [
     styles.battleBackground,
     bgKey === 'loading_dock' ? styles.bg_loading_dock : undefined,
     bgKey === 'server_room' ? styles.bg_server_room : undefined,
+    bgKey === 'command_chamber' ? styles.bg_command_chamber : undefined,
   ].filter(Boolean).join(' ');
 
   return (
@@ -263,6 +275,49 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
         style={{ background: 'white', zIndex: 20 }}
         aria-hidden="true"
       />
+
+      {/* OVERDRIVE warning overlay — OVERDRIVE-02, VISUAL-06
+          pointer-events: none so DEFENDER button stays clickable (T-04-03-01, Pitfall 4)
+          key={overdriveVariant} forces DOM re-create → CSS animation restarts on each TERMINUS announcement
+          Visible during OVERDRIVE_WARNING (player must respond) AND OVERDRIVE_RESOLVING (TERMINUS firing) */}
+      {(state.phase === 'OVERDRIVE_WARNING' || state.phase === 'OVERDRIVE_RESOLVING') && (
+        <div
+          key={overdriveVariant}
+          aria-live="assertive"
+          aria-label="TERMINUS CARREGANDO — use DEFENDER"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 25,
+            pointerEvents: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(255, 0, 128, 0.08)',
+            border: '2px solid rgba(255, 0, 128, 0.4)',
+          }}
+        >
+          <p style={{
+            color: '#ff0080',
+            fontSize: '12px',
+            fontFamily: 'var(--font-pixel), monospace',
+            letterSpacing: '0.1em',
+            textShadow: '0 0 12px rgba(255, 0, 128, 0.8)',
+            marginBottom: '8px',
+          }}>
+            TERMINUS // CARREGANDO
+          </p>
+          <p style={{
+            color: '#ffaacc',
+            fontSize: '8px',
+            fontFamily: 'var(--font-pixel), monospace',
+            letterSpacing: '0.08em',
+          }}>
+            USE [DEFENDER] OU SERA ELIMINADO
+          </p>
+        </div>
+      )}
 
       {/* Main battle layout: flex-col enemy / party / HUD */}
       <div className="relative flex flex-col h-full" style={{ zIndex: 10 }}>
@@ -368,6 +423,7 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
               onDefend={handleDefend}
               onItem={handleItem}
               onSkillWithTarget={handleSkillWithTarget}
+              isOverdrivePhase={state.phase === 'OVERDRIVE_WARNING'}
             />
           )}
         </div>

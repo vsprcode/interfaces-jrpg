@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import type { BattlePhase, Character } from '@/engine/types';
+import styles from '@/styles/battle.module.css';
 
 type SkillSelectStep =
   | { step: 'none' }
@@ -18,6 +19,7 @@ interface ActionMenuProps {
   onDefend: () => void;
   onItem: () => void;
   onSkillWithTarget: (targetId: string, variant: 'HEAL' | 'REMOVE_STATUS') => void;
+  isOverdrivePhase?: boolean;  // true when phase === OVERDRIVE_WARNING (OVERDRIVE-07)
 }
 
 export function ActionMenu({
@@ -30,8 +32,10 @@ export function ActionMenu({
   onDefend,
   onItem,
   onSkillWithTarget,
+  isOverdrivePhase = false,
 }: ActionMenuProps) {
-  const isInputPhase = phase === 'PLAYER_INPUT';
+  // OVERDRIVE-07: OVERDRIVE_WARNING allows DEFEND and ATTACK (player must react to TERMINUS)
+  const isInputPhase = phase === 'PLAYER_INPUT' || phase === 'OVERDRIVE_WARNING';
   const SKILL_EN_COSTS: Record<string, number> = { TORC: 6, TRINETRA: 10, DEADZONE: 8 };
   const canSkill = isInputPhase && actor.en >= (SKILL_EN_COSTS[actor.id] ?? 8);
   const canItem = isInputPhase && items.nanoMed > 0;
@@ -39,9 +43,10 @@ export function ActionMenu({
   // SkillSelectStep: local state machine for TRINETRA's two-step skill flow
   const [skillSelect, setSkillSelect] = useState<SkillSelectStep>({ step: 'none' });
 
-  // Pitfall 5: reset SkillSelectStep when phase changes away from PLAYER_INPUT (T-03-06-01)
+  // Pitfall 5: reset SkillSelectStep when phase changes away from PLAYER_INPUT or OVERDRIVE_WARNING
+  // Keep skill picker open during OVERDRIVE_WARNING so player can still use DEFENDER (T-03-06-01)
   useEffect(() => {
-    if (phase !== 'PLAYER_INPUT') {
+    if (phase !== 'PLAYER_INPUT' && phase !== 'OVERDRIVE_WARNING') {
       setSkillSelect({ step: 'none' });
     }
   }, [phase]);
@@ -154,7 +159,10 @@ export function ActionMenu({
           type="button"
           disabled={!isInputPhase}
           onClick={onDefend}
-          className="px-3 py-1 text-xs border border-electric text-electric disabled:opacity-40 disabled:cursor-not-allowed font-pixel"
+          className={[
+            "px-3 py-1 text-xs border border-electric text-electric disabled:opacity-40 disabled:cursor-not-allowed font-pixel",
+            isOverdrivePhase ? styles.defenderOverdriveGlow : '',
+          ].filter(Boolean).join(' ')}
         >
           DEFENDER
         </button>

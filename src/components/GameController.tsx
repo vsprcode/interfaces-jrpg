@@ -6,12 +6,15 @@ import { ENCOUNTER_CONFIGS } from '@/data/encounters';
 import { BattleScene } from '@/components/BattleScene';
 import { EncounterCompleteScreen } from '@/components/EncounterCompleteScreen';
 import { DialogueBox } from '@/components/DialogueBox';
+import { DemoCompletedScreen } from '@/components/DemoCompletedScreen';
 
 type ControllerPhase =
   | 'BATTLE'
   | 'ENCOUNTER_2_DIALOGUE'
   | 'ENCOUNTER_3_DIALOGUE'
+  | 'ENCOUNTER_4_DIALOGUE'  // AEGIS-7 reveal before E4 (ENC-04)
   | 'ENCOUNTER_COMPLETE'
+  | 'DEMO_COMPLETED'         // shown after AEGIS-7 defeated (END-01)
   | 'GAME_OVER';
 
 // Lore dialogue shown before E2 — TORC intro
@@ -26,6 +29,13 @@ const E3_DIALOGUE = [
   { speaker: 'TRINETRA', text: 'Meus sensores captaram o padrão de vocês dois. Eficiência aceitável.' },
   { speaker: 'TRINETRA', text: 'Animesh Rao. Visionário. System Override já está calibrado.' },
   { speaker: 'TORC', text: 'Trio completo. Próxima sala: Patrol Bots. Sigam minha formação.' },
+];
+
+// Lore dialogue shown before E4 — AEGIS-7 reveal (ENC-04)
+const E4_DIALOGUE = [
+  { speaker: 'DEADZONE', text: 'AEGIS-7. Unidade de enforcement pesado da Casting.' },
+  { speaker: 'TORC', text: 'HP 200. ATK 28. DEF 15. Protocolo de eliminação ativo.' },
+  { speaker: 'TRINETRA', text: 'Quando o contador chegar a zero — use DEFENDER. Sem exceções.' },
 ];
 
 /**
@@ -78,8 +88,16 @@ export function GameController() {
         : nextParty;
       setCarryParty(withTrinetra);
       setControllerPhase('ENCOUNTER_3_DIALOGUE');
+    } else if (encounterIndex === 2) {
+      // E3 complete → AEGIS-7 reveal dialogue before E4 (ENC-04)
+      // No new party member for E4 — full trio already present
+      setCarryParty(nextParty);
+      setControllerPhase('ENCOUNTER_4_DIALOGUE');
+    } else if (encounterIndex === 3) {
+      // E4 complete (AEGIS-7 defeated) → DEMO COMPLETED screen (END-01)
+      setControllerPhase('DEMO_COMPLETED');
     } else {
-      // E3+ → show encounter complete screen
+      // Fallback for any future encounters beyond E4
       setControllerPhase('ENCOUNTER_COMPLETE');
     }
   };
@@ -103,6 +121,14 @@ export function GameController() {
     setControllerPhase('BATTLE');
   };
 
+  // END-05: reset to E1 from DemoCompletedScreen — fresh party, battleKey increment forces remount
+  const handleNewGame = () => {
+    setEncounterIndex(0);
+    setCarryParty(ENCOUNTER_CONFIGS[0]!.party);
+    setBattleKey(k => k + 1);
+    setControllerPhase('BATTLE');
+  };
+
   return (
     <div className="relative w-full max-w-4xl mx-auto" style={{ aspectRatio: '16/9' }}>
       {controllerPhase === 'BATTLE' && (
@@ -121,12 +147,18 @@ export function GameController() {
       {controllerPhase === 'ENCOUNTER_3_DIALOGUE' && (
         <DialogueBox lines={E3_DIALOGUE} onComplete={handleDialogueComplete} />
       )}
+      {controllerPhase === 'ENCOUNTER_4_DIALOGUE' && (
+        <DialogueBox lines={E4_DIALOGUE} onComplete={handleDialogueComplete} />
+      )}
       {controllerPhase === 'ENCOUNTER_COMPLETE' && (
         <EncounterCompleteScreen
           party={completedParty}
           encounterIndex={encounterIndex}
           onContinue={handleContinue}
         />
+      )}
+      {controllerPhase === 'DEMO_COMPLETED' && (
+        <DemoCompletedScreen onNewGame={handleNewGame} />
       )}
     </div>
   );
