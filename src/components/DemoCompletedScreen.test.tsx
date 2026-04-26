@@ -32,7 +32,7 @@ describe('DemoCompletedScreen', () => {
   });
 
   it('tagline is not aria-hidden (narrative content for assistive tech)', () => {
-    const { container } = render(<DemoCompletedScreen onNewGame={() => {}} />);
+    render(<DemoCompletedScreen onNewGame={() => {}} />);
     const taglineEl = screen.getByText(/próximo capítulo em breve/i);
     expect(taglineEl.getAttribute('aria-hidden')).toBeNull();
   });
