@@ -63,8 +63,26 @@ export const AI_BEHAVIORS: Record<EnemyBehaviorType, AIFn> = {
     };
   },
 
-  // Phase 3 Plan 03-03: ATTACK_RANDOM real implementation (AI-04) — implemented below
-  ATTACK_RANDOM: (enemy, state) => stubAction(enemy, state, 'attack_random stub'),
+  // Phase 3 Plan 03-03: ATTACK_RANDOM real implementation (AI-04)
+  ATTACK_RANDOM: (enemy, state) => {
+    const validTargets = state.party.filter(c => !c.isDefeated);
+    if (validTargets.length === 0) {
+      console.error('ATTACK_RANDOM: no valid targets — GAME_OVER should have fired first');
+      return { actorId: enemy.id, description: '(no targets)', animationType: 'ATTACK' };
+    }
+    // QA-04: Math.random() called from reducer dispatch (discrete event) — permitted per ground rules
+    const idx = Math.floor(Math.random() * validTargets.length);
+    const target = validTargets[idx]!;
+    const dmg = calculateDamage(enemy, target, {
+      damageMultiplier: target.isDefending ? 0.5 : 1.0,
+    });
+    return {
+      actorId: enemy.id,
+      description: `${enemy.name} varre o setor aleatoriamente — ${target.name} é atingida — ${dmg} de dano`,
+      hpDelta: [{ targetId: target.id, amount: -dmg }],
+      animationType: 'ATTACK',
+    };
+  },
 
   // Phase 4 implements OVERDRIVE_BOSS
   OVERDRIVE_BOSS: (enemy, state) => stubAction(enemy, state, 'overdrive_boss stub'),

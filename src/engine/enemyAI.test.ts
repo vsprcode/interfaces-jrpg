@@ -242,3 +242,98 @@ describe('TARGET_LOWEST_HP real implementation (AI-03)', () => {
     expect(result.description).toContain('DEADZONE');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────
+// ATTACK_RANDOM real implementation (AI-04)
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('ATTACK_RANDOM real implementation (AI-04)', () => {
+  const patrolBot: Enemy = {
+    kind: 'enemy', id: 'CASTING_PATROL_BOT_A', name: 'Casting Patrol Bot',
+    hp: 45, maxHp: 45, en: 0, maxEn: 0, atk: 13, def: 7, spd: 9,
+    statusEffects: [], isDefeated: false, behavior: 'ATTACK_RANDOM',
+  };
+  const dzFull: Character = {
+    kind: 'player', id: 'DEADZONE', name: 'DEADZONE',
+    hp: 95, maxHp: 95, en: 25, maxEn: 25, atk: 22, def: 10, spd: 18,
+    statusEffects: [], isDefeated: false, isDefending: false,
+  };
+  const torc: Character = {
+    kind: 'player', id: 'TORC', name: 'TORC',
+    hp: 130, maxHp: 130, en: 20, maxEn: 20, atk: 18, def: 20, spd: 12,
+    statusEffects: [], isDefeated: false, isDefending: false,
+  };
+  const trinetra: Character = {
+    kind: 'player', id: 'TRINETRA', name: 'TRINETRA',
+    hp: 85, maxHp: 85, en: 35, maxEn: 35, atk: 15, def: 12, spd: 15,
+    statusEffects: [], isDefeated: false, isDefending: false,
+  };
+
+  it('ATTACK_RANDOM: returns a valid alive party member as target', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [dzFull, torc, trinetra],
+      enemies: [patrolBot],
+    };
+    const validIds = new Set(['DEADZONE', 'TORC', 'TRINETRA']);
+    for (let i = 0; i < 10; i++) {
+      const result = AI_BEHAVIORS['ATTACK_RANDOM'](patrolBot, state);
+      expect(result.hpDelta).toBeDefined();
+      expect(result.hpDelta).toHaveLength(1);
+      expect(validIds.has(result.hpDelta![0]!.targetId as string)).toBe(true);
+    }
+  });
+
+  it('ATTACK_RANDOM: never targets defeated party members', () => {
+    const dzDefeated = { ...dzFull, isDefeated: true };
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [dzDefeated, torc, trinetra],
+      enemies: [patrolBot],
+    };
+    for (let i = 0; i < 20; i++) {
+      const result = AI_BEHAVIORS['ATTACK_RANDOM'](patrolBot, state);
+      expect(result.hpDelta![0]!.targetId).not.toBe('DEADZONE');
+    }
+  });
+
+  it('ATTACK_RANDOM: applies 0.5 damage multiplier when target is defending', () => {
+    // Use DEADZONE (DEF:10) as the only alive target to remove randomness.
+    // Patrol Bot ATK:13 vs DEADZONE DEF:10 → base dmg = 3
+    // Not defending: max(1, floor(3 * 1.0)) = 3
+    // Defending:     max(1, floor(3 * 0.5)) = max(1, 1) = 1
+    // 3 > 1 — difference is observable.
+    const dzDefending = { ...dzFull, isDefending: true };
+    const dzNotDefending = { ...dzFull, isDefending: false };
+
+    const stateDefending: BattleState = {
+      ...initialBattleState,
+      party: [dzDefending],
+      enemies: [patrolBot],
+    };
+    const stateNotDefending: BattleState = {
+      ...initialBattleState,
+      party: [dzNotDefending],
+      enemies: [patrolBot],
+    };
+
+    const defendingResult = AI_BEHAVIORS['ATTACK_RANDOM'](patrolBot, stateDefending);
+    const attackResult = AI_BEHAVIORS['ATTACK_RANDOM'](patrolBot, stateNotDefending);
+
+    // Non-defending should deal more damage than defending
+    expect(Math.abs(attackResult.hpDelta![0]!.amount)).toBeGreaterThan(
+      Math.abs(defendingResult.hpDelta![0]!.amount)
+    );
+  });
+
+  it('ATTACK_RANDOM: returns no-op when all party defeated', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [{ ...dzFull, isDefeated: true }],
+      enemies: [patrolBot],
+    };
+    expect(() => AI_BEHAVIORS['ATTACK_RANDOM'](patrolBot, state)).not.toThrow();
+    const result = AI_BEHAVIORS['ATTACK_RANDOM'](patrolBot, state);
+    expect(result.description).toBe('(no targets)');
+  });
+});
