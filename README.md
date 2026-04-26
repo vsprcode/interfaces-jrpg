@@ -4,7 +4,7 @@ A playable browser JRPG set in the [In]terfaces universe (2042, Pre-Transhuman E
 
 No traditional heroism. Just survival and structural resistance in a system designed to control.
 
-**[Play the demo →](https://interfaces-jrpg.vercel.app)** *(link updated after deploy)*
+**[Play the demo →](https://interfaces-jrpg.vercel.app)**
 
 ---
 
