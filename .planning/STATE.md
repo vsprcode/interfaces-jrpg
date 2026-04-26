@@ -14,8 +14,8 @@ progress:
 
 # STATE — [In]terfaces JRPG Demo
 
-**Last updated:** 2026-04-25
-**Status:** Ready to plan
+**Last updated:** 2026-04-26
+**Status:** Ready to plan Phase 3
 
 ---
 
@@ -23,9 +23,9 @@ progress:
 
 **Core value:** Entregar uma experiência JRPG completa e polida em browser (4 batalhas + boss AEGIS-7) que sirva como vitrine do universo [In]terfaces para leitores/players sem contato prévio com o worldbuilding.
 
-**Current focus:** Phase 01 — foundation-pure-engine
+**Current focus:** Phase 03 — party-expansion-encounters-2-3 (next)
 
-**Stack (locked):** Next.js 14 (App Router) + TypeScript strict + Tailwind v4 (with v3 fallback) + `useReducer` (NOT Zustand) + CSS Modules for keyframes + Press Start 2P via `next/font/google` + Vitest 2 + Vercel.
+**Stack (locked):** Next.js 14 (App Router) + TypeScript strict + Tailwind v4 + `useReducer` (NOT Zustand) + CSS Modules for keyframes + Press Start 2P via `next/font/google` + Vitest 2 + Vercel.
 
 ---
 
@@ -35,10 +35,10 @@ Phase: 3
 Plan: Not started
 | Field | Value |
 |-------|-------|
-| **Phase** | 1 — Foundation & Pure Engine |
-| **Plan** | (none yet — awaiting `/gsd-plan-phase 1`) |
-| **Status** | Roadmap created, planning pending |
-| **Progress** | `[░░░░░░░░░░] 0% — 0/5 phases complete` |
+| **Phase** | 3 — Party Expansion (Encounters 2 & 3) |
+| **Plan** | Not started — awaiting `/gsd-plan-phase 3` |
+| **Status** | Phase 2 complete, ready to plan Phase 3 |
+| **Progress** | `[████░░░░░░] 40% — 2/5 phases complete` |
 
 ---
 
@@ -47,11 +47,11 @@ Plan: Not started
 | Metric | Target | Current |
 |--------|--------|---------|
 | v1 requirements mapped | 76/76 | 76/76 ✓ |
-| Phases complete | 5/5 | 0/5 |
-| Vitest suite green | 100% | n/a (not started) |
+| Phases complete | 5/5 | 2/5 |
+| Vitest suite green | 100% | 91/91 ✓ |
 | Lighthouse Performance | >= 80 | n/a |
 | Lighthouse Accessibility | >= 80 | n/a |
-| Production build clean | yes | n/a |
+| Production build clean | yes | ✓ (92.9 kB) |
 
 ---
 
@@ -70,14 +70,14 @@ Plan: Not started
 
 ### Open Todos
 
-- [ ] Run `/gsd-plan-phase 1` to decompose Phase 1 into executable plans
+- [ ] Human browser UAT for Phase 2: `npm run dev` → 14-step checklist in `02-HUMAN-UAT.md`
 - [ ] Confirm audio policy with owner (current default: no audio)
 - [ ] Decide on optional `DISRUPTED` status effect (4th status) during Phase 3 planning
-- [ ] Begin AI asset generation in parallel (start with 3 character portraits — see UI-ASSETS.md §5 workflow)
+- [ ] Phase 3 code review WR-01/WR-02 fix: phase-transition holes in defeated-enemy skip paths (reducer.ts:241-248, 259-271)
 
 ### Active Blockers
 
-None. Roadmap approved, ready to begin Phase 1 planning.
+None.
 
 ### Pitfall Watch (active throughout all phases)
 
@@ -95,13 +95,12 @@ None. Roadmap approved, ready to begin Phase 1 planning.
 
 - Read `.planning/ROADMAP.md` for full phase breakdown
 - Read `.planning/PROJECT.md` for character stats, mechanics, lore
-- Read `.planning/research/SUMMARY.md` for stack rationale and pitfall details
-- Read `.planning/UI-ASSETS.md` for visual direction and asset prompts
-- Run `/gsd-plan-phase 1` to begin executable planning
+- Read `.planning/phases/02-encounter-1-deadzone-solo/02-HUMAN-UAT.md` for pending browser UAT checklist
+- Read `.planning/phases/02-encounter-1-deadzone-solo/02-REVIEW.md` for code review warnings to fix in Phase 3
 
-**Last action:** Roadmap created with 5 phases, 76/76 requirement coverage, asset distribution strategy.
+**Last action (2026-04-26):** Phase 2 complete — 6/6 plans executed, 91 tests green, TypeScript + build clean. BattleScene fully wired: DEADZONE solo vs Casting Probe MK-I playable end-to-end.
 
-**Next action:** `/gsd-plan-phase 1` to decompose Phase 1 (Foundation & Pure Engine) into executable plans.
+**Next action:** `/gsd-plan-phase 3` to plan party expansion (Encounters 2 & 3 — TORC joins, then TRINETRA joins).
 
 ---
 
