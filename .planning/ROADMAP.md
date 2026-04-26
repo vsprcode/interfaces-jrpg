@@ -11,7 +11,7 @@
 - [ ] **Phase 1: Foundation & Pure Engine** — Scaffolding, types, pure battle engine, reducer skeleton, pitfall ground rules
 - [ ] **Phase 2: Encounter 1 — DEADZONE Solo** — First playable loop end-to-end (UI + engine integration)
 - [x] **Phase 3: Party Expansion (Encounters 2 & 3)** — TORC + TRINETRA, status effects, differentiated enemy AI (completed 2026-04-26)
-- [ ] **Phase 4: AEGIS-7 + OVERDRIVE Boss** — Two-phase boss state machine, TERMINUS mechanic, edge cases
+- [x] **Phase 4: AEGIS-7 + OVERDRIVE Boss** — Two-phase boss state machine, TERMINUS mechanic, edge cases (completed 2026-04-26)
 - [ ] **Phase 5: Polish, Narrative & Demo Completion** — Cinematic narrative, visual polish, deploy, README
 
 ---
@@ -88,10 +88,10 @@ Plans:
   4. Defeating AEGIS-7 triggers `DEMO COMPLETED` screen with ASCII-art, a working `NOVA INFILTRAÇÃO` button, and a clean reset to title via React `key` prop
 **Plans**: 4 plans
 Plans:
-- [ ] 04-01-PLAN.md — Wave 0: Types + Data Foundation (BattlePhase extension, overdrivePending, AEGIS_7, ENCOUNTER_CONFIGS[3])
-- [ ] 04-02-PLAN.md — Wave 1: OVERDRIVE Engine TDD (reducer phase transitions + OVERDRIVE_BOSS AI + 12 edge-case tests)
-- [ ] 04-03-PLAN.md — Wave 2: OVERDRIVE UI + DemoCompletedScreen (overlay, DEFENDER glow, E4 GameController flow)
-- [ ] 04-04-PLAN.md — Wave 3: CSS Visual Polish + QA (overdrivePulse, defenderGlow, command_chamber bg, human verify)
+- [x] 04-01-PLAN.md — Wave 0: Types + Data Foundation (BattlePhase extension, overdrivePending, AEGIS_7, ENCOUNTER_CONFIGS[3])
+- [x] 04-02-PLAN.md — Wave 1: OVERDRIVE Engine TDD (reducer phase transitions + OVERDRIVE_BOSS AI + 12 edge-case tests)
+- [x] 04-03-PLAN.md — Wave 2: OVERDRIVE UI + DemoCompletedScreen (overlay, DEFENDER glow, E4 GameController flow)
+- [x] 04-04-PLAN.md — Wave 3: CSS Visual Polish + QA (overdrivePulse, defenderGlow, command_chamber bg, human verify)
 **UI hint**: yes
 
 ### Phase 5: Polish, Narrative & Demo Completion
@@ -115,7 +115,7 @@ Plans:
 | 1. Foundation & Pure Engine | 8/8 | Complete | 2026-04-26 |
 | 2. Encounter 1 — DEADZONE Solo | 0/6 | Planned | - |
 | 3. Party Expansion (E2 & E3) | 7/7 | Complete    | 2026-04-26 |
-| 4. AEGIS-7 + OVERDRIVE Boss | 0/4 | Planned | - |
+| 4. AEGIS-7 + OVERDRIVE Boss | 4/4 | Complete   | 2026-04-26 |
 | 5. Polish, Narrative & Demo | 0/0 | Not started | - |
 
 ---

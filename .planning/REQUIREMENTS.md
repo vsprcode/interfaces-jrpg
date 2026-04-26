@@ -88,7 +88,7 @@
 - [ ] **VISUAL-03**: CSS keyframe animation `screen-flash` para acertos críticos (white→transparent 200ms)
 - [ ] **VISUAL-04**: CSS keyframe animation `screen-shake` para impactos pesados (translate ±4px 300ms)
 - [ ] **VISUAL-05**: CSS keyframe particle effects para 3 habilidades (Signal Null, Forge Wall, System Override)
-- [ ] **VISUAL-06**: OVERDRIVE warning overlay (magenta border pulsante full-screen) durante turno OVERDRIVE
+- [x] **VISUAL-06**: OVERDRIVE warning overlay (magenta border pulsante full-screen) durante turno OVERDRIVE
 - [ ] **VISUAL-07**: Todas animações usam `transform`/`opacity` (GPU compositor — sem layout thrashing)
 
 ### Narrative (NARR)
@@ -112,9 +112,9 @@
 
 - [ ] **ASSETS-01**: Sprites de batalha + portraits dos 3 personagens (DEADZONE, TORC, TRINETRA)
 - [ ] **ASSETS-02**: Sprites dos 4 inimigos (Probe MK-I, Networker Enforcer, Patrol Bot, AEGIS-7)
-- [ ] **ASSETS-03**: 4 backgrounds (corridor, loading dock, server room, command chamber)
+- [x] **ASSETS-03**: 4 backgrounds (corridor, loading dock, server room, command chamber)
 - [ ] **ASSETS-04**: UI frames (HUD, menu, dialogue box, title logo)
-- [ ] **ASSETS-05**: 3 effect sprite sheets (Signal Null, Forge Wall, System Override) + OVERDRIVE warning overlay
+- [x] **ASSETS-05**: 3 effect sprite sheets (Signal Null, Forge Wall, System Override) + OVERDRIVE warning overlay
 - [ ] **ASSETS-06**: Ícones (Nano-Med, 3 habilidades, status effects)
 - [ ] **ASSETS-07**: Fallback CSS-only para sprites caso geração de IA falhe (silhuetas geométricas + glow)
 
@@ -125,7 +125,7 @@
 - [ ] **QA-03**: Reducer cases usam `.map()` com spread (não index assignment) — testado com mutação detection
 - [ ] **QA-04**: `Math.random()` apenas dentro de `useEffect` ou actions do reducer (não no render)
 - [ ] **QA-05**: Phase guard testado: dispatch fora de PLAYER_INPUT é no-op
-- [ ] **QA-06**: Suite Vitest cobre damage calc, turn queue, AI behaviors, OVERDRIVE edge cases
+- [x] **QA-06**: Suite Vitest cobre damage calc, turn queue, AI behaviors, OVERDRIVE edge cases
 - [ ] **QA-07**: Build de produção testado em modo Strict (sem warnings)
 - [ ] **QA-08**: Lighthouse score >= 80 em Performance e Accessibility
 
