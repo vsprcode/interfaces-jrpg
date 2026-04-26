@@ -46,10 +46,10 @@ describe('DemoCompletedScreen', () => {
     expect(italicIdx).toBeGreaterThanOrEqual(0);
     expect(taglineIdx).toBeGreaterThan(italicIdx);
     const button = container.querySelector('button');
-    if (button && container.querySelectorAll('p')[taglineIdx]) {
+    const taglineNode = Array.from(container.querySelectorAll('p'))[taglineIdx] as Element | undefined;
+    if (button && taglineNode) {
       const allNodes = Array.from(container.querySelectorAll('*'));
       const btnIdx = allNodes.indexOf(button);
-      const taglineNode = Array.from(container.querySelectorAll('p'))[taglineIdx];
       const taglineNodeIdx = allNodes.indexOf(taglineNode);
       expect(taglineNodeIdx).toBeLessThan(btnIdx);
     }

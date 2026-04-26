@@ -49,6 +49,7 @@ export function CharacterHUD({ character }: CharacterHUDProps) {
             style={{ width: `${hpRatio * 100}%` }}
             role="progressbar"
             aria-valuenow={character.hp}
+            aria-valuemin={0}
             aria-valuemax={character.maxHp}
             aria-label={`HP de ${character.name}`}
           />
@@ -69,6 +70,7 @@ export function CharacterHUD({ character }: CharacterHUDProps) {
             style={{ width: `${enRatio * 100}%` }}
             role="progressbar"
             aria-valuenow={character.en}
+            aria-valuemin={0}
             aria-valuemax={character.maxEn}
             aria-label={`EN de ${character.name}`}
           />
