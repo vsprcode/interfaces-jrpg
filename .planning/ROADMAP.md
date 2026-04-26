@@ -10,7 +10,7 @@
 
 - [ ] **Phase 1: Foundation & Pure Engine** — Scaffolding, types, pure battle engine, reducer skeleton, pitfall ground rules
 - [ ] **Phase 2: Encounter 1 — DEADZONE Solo** — First playable loop end-to-end (UI + engine integration)
-- [ ] **Phase 3: Party Expansion (Encounters 2 & 3)** — TORC + TRINETRA, status effects, differentiated enemy AI
+- [x] **Phase 3: Party Expansion (Encounters 2 & 3)** — TORC + TRINETRA, status effects, differentiated enemy AI (completed 2026-04-26)
 - [ ] **Phase 4: AEGIS-7 + OVERDRIVE Boss** — Two-phase boss state machine, TERMINUS mechanic, edge cases
 - [ ] **Phase 5: Polish, Narrative & Demo Completion** — Cinematic narrative, visual polish, deploy, README
 
@@ -109,7 +109,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation & Pure Engine | 8/8 | Complete | 2026-04-26 |
 | 2. Encounter 1 — DEADZONE Solo | 0/6 | Planned | - |
-| 3. Party Expansion (E2 & E3) | 0/7 | Planned | - |
+| 3. Party Expansion (E2 & E3) | 7/7 | Complete    | 2026-04-26 |
 | 4. AEGIS-7 + OVERDRIVE Boss | 0/0 | Not started | - |
 | 5. Polish, Narrative & Demo | 0/0 | Not started | - |
 
