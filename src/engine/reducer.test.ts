@@ -117,4 +117,73 @@ describe('battleReducer', () => {
     const next = battleReducer(state, { type: 'CHECK_END_CONDITIONS' });
     expect(next).toBe(state);
   });
+
+  it('ENEMY_ACTION transitions from ENEMY_TURN to RESOLVING', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [dz], enemies: [probe], phase: 'ENEMY_TURN',
+    };
+    const next = battleReducer(state, { type: 'ENEMY_ACTION' });
+    expect(next.phase).toBe('RESOLVING');
+    expect(next).not.toBe(state);
+  });
+
+  it('ENEMY_ACTION is a no-op when phase is not ENEMY_TURN', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [dz], enemies: [probe], phase: 'PLAYER_INPUT',
+    };
+    expect(battleReducer(state, { type: 'ENEMY_ACTION' })).toBe(state);
+  });
+
+  it('NEXT_TURN advances currentTurnIndex within the same round', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [dz], enemies: [probe],
+      phase: 'PLAYER_INPUT',
+      turnQueue: [
+        { combatantId: 'DEADZONE', speed: 18 },
+        { combatantId: 'CASTING_PROBE_MK1', speed: 10 },
+      ],
+      currentTurnIndex: 0,
+      round: 1,
+    };
+    const next = battleReducer(state, { type: 'NEXT_TURN' });
+    expect(next.currentTurnIndex).toBe(1);
+    expect(next.round).toBe(1);
+  });
+
+  it('NEXT_TURN wraps to a new queue when the last turn is consumed', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [dz], enemies: [probe],
+      phase: 'PLAYER_INPUT',
+      turnQueue: [{ combatantId: 'DEADZONE', speed: 18 }],
+      currentTurnIndex: 0,
+      round: 1,
+    };
+    const next = battleReducer(state, { type: 'NEXT_TURN' });
+    expect(next.currentTurnIndex).toBe(0);
+    expect(next.round).toBe(2);
+    expect(next.turnQueue).toHaveLength(2); // rebuilt from party + enemies
+  });
+
+  it('ACTION_RESOLVED transitions from RESOLVING to PLAYER_INPUT and clears pendingAction', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      party: [dz], enemies: [probe], phase: 'RESOLVING',
+      pendingAction: { actorId: 'DEADZONE', description: 'test', animationType: 'ATTACK' },
+    };
+    const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+    expect(next.phase).toBe('PLAYER_INPUT');
+    expect(next.pendingAction).toBeNull();
+  });
+
+  it('ACTION_RESOLVED is a no-op when phase is not RESOLVING', () => {
+    const state: BattleState = {
+      ...initialBattleState,
+      phase: 'PLAYER_INPUT',
+    };
+    expect(battleReducer(state, { type: 'ACTION_RESOLVED' })).toBe(state);
+  });
 });

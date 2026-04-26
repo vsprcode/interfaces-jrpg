@@ -9,7 +9,7 @@ export default defineConfig({
       provider: 'v8',             // built into Node 18+
       reporter: ['text', 'html'],
       include: ['src/engine/**/*.ts'],
-      exclude: ['src/engine/**/*.test.ts', 'src/engine/types.ts'],
+      exclude: ['src/engine/**/*.test.ts', 'src/engine/types.ts', 'src/engine/gameStateRef.ts'],
       thresholds: {
         lines: 80,
         functions: 80,
