@@ -222,7 +222,11 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
             log: [...state.log, resolved.description],
           };
         }
+
+        default:
+          return state;
       }
+      return state;
     }
 
     case 'ACTION_RESOLVED': {

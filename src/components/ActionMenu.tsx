@@ -32,7 +32,8 @@ export function ActionMenu({
   onSkillWithTarget,
 }: ActionMenuProps) {
   const isInputPhase = phase === 'PLAYER_INPUT';
-  const canSkill = isInputPhase && actor.en >= 8;
+  const SKILL_EN_COSTS: Record<string, number> = { TORC: 6, TRINETRA: 10, DEADZONE: 8 };
+  const canSkill = isInputPhase && actor.en >= (SKILL_EN_COSTS[actor.id] ?? 8);
   const canItem = isInputPhase && items.nanoMed > 0;
 
   // SkillSelectStep: local state machine for TRINETRA's two-step skill flow
