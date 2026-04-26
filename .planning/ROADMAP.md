@@ -49,12 +49,12 @@
   3. Player defeats the Probe and triggers the engine's victory transition (logs end of encounter, clears battle); player who lets DEADZONE die sees `GAME OVER` with a working `TENTAR NOVAMENTE` that resets via React `key` prop
   4. Battle log shows lore-flavored action text in chronological order; AI Probe always attacks (no skipped turns, no double-fires) under React Strict Mode
 **Plans**: 6 plans
-- [ ] 02-01-PLAN.md — Test Infrastructure (jsdom + RTL install + vitest config dual-env + gameStateRef tests)
-- [ ] 02-02-PLAN.md — Reducer Engine (PLAYER_ACTION routing ATTACK/DEFEND/ITEM + ACTION_RESOLVED delta applier) [TDD]
-- [ ] 02-03-PLAN.md — Signal Null + ALWAYS_ATTACK AI (SKILL case + AI-02 real implementation) [TDD]
-- [ ] 02-04-PLAN.md — ActionMenu + CharacterHUD (4-button command menu + HP/EN bars + battle.module.css)
-- [ ] 02-05-PLAN.md — EnemyPanel + BattleLog + FloatingDamageNumber (enemy display + log + damage popup)
-- [ ] 02-06-PLAN.md — BattleScene Integration + End Screens (full wiring + VictoryScreen + GameOverScreen + human verify)
+- [x] 02-01-PLAN.md — Test Infrastructure (jsdom + RTL install + vitest config dual-env + gameStateRef tests)
+- [x] 02-02-PLAN.md — Reducer Engine (PLAYER_ACTION routing ATTACK/DEFEND/ITEM + ACTION_RESOLVED delta applier) [TDD]
+- [x] 02-03-PLAN.md — Signal Null + ALWAYS_ATTACK AI (SKILL case + AI-02 real implementation) [TDD]
+- [x] 02-04-PLAN.md — ActionMenu + CharacterHUD (4-button command menu + HP/EN bars + battle.module.css)
+- [x] 02-05-PLAN.md — EnemyPanel + BattleLog + FloatingDamageNumber (enemy display + log + damage popup)
+- [x] 02-06-PLAN.md — BattleScene Integration + End Screens (full wiring + VictoryScreen + GameOverScreen + human verify)
 **UI hint**: yes
 
 ### Phase 3: Party Expansion (Encounters 2 & 3)
