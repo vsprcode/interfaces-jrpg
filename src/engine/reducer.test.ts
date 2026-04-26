@@ -989,4 +989,220 @@ describe('battleReducer', () => {
       expect(next.enemies[0]!.hp).toBe(40); // clamped at maxHp, not 50
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SKILL/TORC: Forge Wall — DEF_BUFF to all alive party members
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('SKILL/TORC: Forge Wall', () => {
+    const torc: Character = {
+      kind: 'player', id: 'TORC', name: 'TORC',
+      hp: 130, maxHp: 130, en: 20, maxEn: 20, atk: 18, def: 20, spd: 12,
+      statusEffects: [], isDefeated: false, isDefending: false,
+    };
+
+    it('SKILL/TORC (Forge Wall): applies DEF_BUFF statusEffect to all alive party members', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [{ ...dz, hp: 50 }, torc],
+        enemies: [probe],
+        phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'TORC', kind: 'player', spd: 12 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'TORC' },
+      });
+      expect(next.phase).toBe('RESOLVING');
+      expect(next.pendingAction).not.toBeNull();
+      expect(next.pendingAction!.statusApplied).toHaveLength(2);
+      expect(next.pendingAction!.statusApplied![0]!.effect.type).toBe('DEF_BUFF');
+      expect(next.pendingAction!.statusApplied![0]!.effect.turnsRemaining).toBe(2);
+      expect(next.pendingAction!.statusApplied![0]!.effect.magnitude).toBe(8);
+      expect(next.pendingAction!.statusApplied![1]!.effect.type).toBe('DEF_BUFF');
+      expect(next.pendingAction!.statusApplied![1]!.effect.turnsRemaining).toBe(2);
+      expect(next.pendingAction!.statusApplied![1]!.effect.magnitude).toBe(8);
+    });
+
+    it('SKILL/TORC (Forge Wall): deducts 6 EN from TORC', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [{ ...dz, hp: 50 }, torc],
+        enemies: [probe],
+        phase: 'PLAYER_INPUT',
+        turnQueue: [
+          { combatantId: 'TORC', kind: 'player', spd: 12 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'TORC' },
+      });
+      expect(next.pendingAction!.enDelta).toHaveLength(1);
+      expect(next.pendingAction!.enDelta![0]!.targetId).toBe('TORC');
+      expect(next.pendingAction!.enDelta![0]!.amount).toBe(-6);
+    });
+
+    it('SKILL/TORC (Forge Wall): EN guard — returns same state if TORC.en < 6', () => {
+      const torcLowEn = { ...torc, en: 5 };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dz, torcLowEn],
+        enemies: [probe],
+        phase: 'PLAYER_INPUT',
+      };
+      const next = battleReducer(state, {
+        type: 'PLAYER_ACTION',
+        payload: { type: 'SKILL', actorId: 'TORC' },
+      });
+      expect(next).toBe(state);
+    });
+
+    it('ACTION_RESOLVED: applies statusApplied entries to party members', () => {
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [{ ...dz, hp: 50 }, torc],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'TORC', kind: 'player', spd: 12 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1,
+        pendingAction: {
+          actorId: 'TORC',
+          description: 'Forge Wall',
+          enDelta: [{ targetId: 'TORC', amount: -6 }],
+          statusApplied: [{ targetId: 'DEADZONE', effect: { type: 'DEF_BUFF', turnsRemaining: 2, magnitude: 8 } }],
+          animationType: 'SKILL_SHIELD',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      const dz2 = next.party.find(c => c.id === 'DEADZONE');
+      expect(dz2!.statusEffects).toHaveLength(1);
+      expect(dz2!.statusEffects[0]!.type).toBe('DEF_BUFF');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SKILL-05: Status effect decrement end-of-round
+  // ─────────────────────────────────────────────────────────────────────────
+
+  describe('SKILL-05: Status effect lifecycle — decrement end-of-round only', () => {
+    const torc: Character = {
+      kind: 'player', id: 'TORC', name: 'TORC',
+      hp: 130, maxHp: 130, en: 20, maxEn: 20, atk: 18, def: 20, spd: 12,
+      statusEffects: [], isDefeated: false, isDefending: false,
+    };
+
+    it('SKILL-05: DEF_BUFF does NOT decrement mid-round (nextIndex < queue.length)', () => {
+      // 2 combatants in queue, currentTurnIndex=0 → nextIndex=1 → mid-round → no decrement
+      const dzWithBuff: Character = {
+        ...dz,
+        statusEffects: [{ type: 'DEF_BUFF', turnsRemaining: 2, magnitude: 8 }],
+      };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzWithBuff, torc],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 0,
+        pendingAction: {
+          actorId: 'DEADZONE',
+          description: 'mid-round action',
+          animationType: 'ATTACK',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      const dzResult = next.party.find(c => c.id === 'DEADZONE');
+      // Mid-round: turnsRemaining should NOT have been decremented
+      expect(dzResult!.statusEffects[0]!.turnsRemaining).toBe(2);
+    });
+
+    it('SKILL-05: DEF_BUFF decrements turnsRemaining at end-of-round (nextIndex >= queue.length)', () => {
+      // Queue has 2 entries, currentTurnIndex=1 → nextIndex=2 === queue.length → end-of-round
+      const dzWithBuff: Character = {
+        ...dz,
+        statusEffects: [{ type: 'DEF_BUFF', turnsRemaining: 2, magnitude: 8 }],
+      };
+      const state: BattleState = {
+        ...initialBattleState,
+        party: [dzWithBuff, torc],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1,
+        pendingAction: {
+          actorId: 'CASTING_PROBE_MK1',
+          description: 'end-of-round action',
+          animationType: 'ATTACK',
+        },
+      };
+      const next = battleReducer(state, { type: 'ACTION_RESOLVED' });
+      const dzResult = next.party.find(c => c.id === 'DEADZONE');
+      // End-of-round: turnsRemaining decremented from 2 to 1
+      expect(dzResult!.statusEffects[0]!.turnsRemaining).toBe(1);
+    });
+
+    it('SKILL-05: DEF_BUFF expires (filtered out) after 2 end-of-round decrements', () => {
+      const dzWithBuff: Character = {
+        ...dz,
+        statusEffects: [{ type: 'DEF_BUFF', turnsRemaining: 2, magnitude: 8 }],
+      };
+      const state1: BattleState = {
+        ...initialBattleState,
+        party: [dzWithBuff, torc],
+        enemies: [probe],
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1, // last entry → end-of-round
+        pendingAction: {
+          actorId: 'CASTING_PROBE_MK1',
+          description: 'end-of-round 1',
+          animationType: 'ATTACK',
+        },
+      };
+      // First end-of-round decrement: turnsRemaining 2 → 1
+      const after1 = battleReducer(state1, { type: 'ACTION_RESOLVED' });
+      const dzAfter1 = after1.party.find(c => c.id === 'DEADZONE');
+      expect(dzAfter1!.statusEffects[0]!.turnsRemaining).toBe(1);
+
+      // Second end-of-round: turnsRemaining 1 → 0 → filtered out
+      const state2: BattleState = {
+        ...after1,
+        phase: 'RESOLVING',
+        turnQueue: [
+          { combatantId: 'DEADZONE', kind: 'player', spd: 18 },
+          { combatantId: 'CASTING_PROBE_MK1', kind: 'enemy', spd: 10 },
+        ],
+        currentTurnIndex: 1, // last entry → end-of-round
+        pendingAction: {
+          actorId: 'CASTING_PROBE_MK1',
+          description: 'end-of-round 2',
+          animationType: 'ATTACK',
+        },
+      };
+      const after2 = battleReducer(state2, { type: 'ACTION_RESOLVED' });
+      const dzAfter2 = after2.party.find(c => c.id === 'DEADZONE');
+      expect(dzAfter2!.statusEffects).toHaveLength(0);
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import type { BattleState, Action, ResolvedAction } from './types';
+import type { BattleState, Action, ResolvedAction, StatusEffect } from './types';
 import { buildTurnQueue } from './turnQueue';
 import { calculateDamage } from './damage';
 import { resolveEnemyAction } from './enemyAI';
@@ -122,7 +122,36 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
         }
 
         case 'SKILL': {
-          // Signal Null (SKILL-01/04): defPenetration 0.7, EN cost 8
+          // Route by actorId to support multiple characters' skills
+          if (actorId === 'TORC') {
+            // Forge Wall (SKILL-02): DEF_BUFF +8 to all alive party members, EN cost 6
+            const EN_COST = 6;
+            if (actor.en < EN_COST) return state;
+            const shieldEffect: StatusEffect = {
+              type: 'DEF_BUFF',
+              turnsRemaining: 2,
+              magnitude: 8,
+              appliedBy: 'TORC',
+            };
+            const resolved: ResolvedAction = {
+              actorId: actor.id,
+              description: 'TORC ergue o FORGE WALL — barreira analógica ativada — DEF +8 por 2 turnos',
+              enDelta: [{ targetId: actor.id, amount: -EN_COST }],
+              statusApplied: state.party
+                .filter(c => !c.isDefeated)
+                .map(c => ({ targetId: c.id, effect: shieldEffect })),
+              animationType: 'SKILL_SHIELD',
+            };
+            return {
+              ...state,
+              party: partyCleared,
+              phase: 'RESOLVING',
+              pendingAction: resolved,
+              log: [...state.log, resolved.description],
+            };
+          }
+
+          // Signal Null — DEADZONE (SKILL-01/04): defPenetration 0.7, EN cost 8
           const EN_COST = 8;
           if (actor.en < EN_COST) return state; // SKILL-04: same-reference no-op (T-02-03-01)
           const target = state.enemies.find(e => e.id === targetId)!;
@@ -181,6 +210,37 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
         }
       }
 
+      // Apply statusApplied entries
+      if (state.pendingAction?.statusApplied) {
+        for (const sa of state.pendingAction.statusApplied) {
+          newParty = newParty.map(c =>
+            c.id === sa.targetId
+              ? { ...c, statusEffects: [...c.statusEffects, sa.effect] }
+              : c
+          );
+        }
+      }
+
+      // Apply statusRemoved entries
+      if (state.pendingAction?.statusRemoved) {
+        for (const sr of state.pendingAction.statusRemoved) {
+          newParty = newParty.map(c =>
+            c.id === sr.targetId
+              ? { ...c, statusEffects: c.statusEffects.filter(e => e.type !== sr.effectType) }
+              : c
+          );
+        }
+      }
+
+      // Helper: decrement status turnsRemaining and filter expired (SKILL-05: end-of-round only)
+      const decrementStatuses = <T extends { statusEffects: StatusEffect[] }>(combatants: T[]): T[] =>
+        combatants.map(c => ({
+          ...c,
+          statusEffects: c.statusEffects
+            .map(e => ({ ...e, turnsRemaining: e.turnsRemaining - 1 }))
+            .filter(e => e.turnsRemaining > 0),
+        }));
+
       // T-02-02-04: Check end conditions BEFORE advancing queue (Pitfall C)
       if (newEnemies.every(e => e.isDefeated)) {
         return {
@@ -206,7 +266,10 @@ export function battleReducer(state: BattleState, action: Action): BattleState {
       // Advance turn queue
       const nextIndex = state.currentTurnIndex + 1;
       if (nextIndex >= state.turnQueue.length) {
-        // End of round — rebuild queue for new round
+        // End of round — decrement statuses (SKILL-05: end-of-round only, not per action step)
+        newParty = decrementStatuses(newParty);
+        newEnemies = decrementStatuses(newEnemies);
+        // Rebuild queue for new round
         const newQueue = buildTurnQueue(newParty, newEnemies);
         const nextEntry = newQueue[0];
         const nextPhase = nextEntry!.kind === 'player' ? 'PLAYER_INPUT' : 'ENEMY_TURN';
