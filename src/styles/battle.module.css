@@ -235,3 +235,104 @@
   border: 1px solid #ff0080;
   color: #ff0080;
 }
+
+/* ── Encounter 4 — Command Chamber background (ASSETS-03, ENC-04) ─────────── */
+/* Dark magenta gradient — visually distinct from the three previous encounters. */
+.bg_command_chamber {
+  background: linear-gradient(
+    180deg,
+    #1a0010 0%,
+    #2e001a 60%,
+    #100008 100%
+  );
+}
+
+/* ── OVERDRIVE warning overlay (VISUAL-06, OVERDRIVE-02) ─────────────────── */
+/* Pulsing magenta border fills the entire battle container to signal danger.   */
+/* Variant A/B trick: class name change forces React DOM diff → animation       */
+/* restarts from frame 0 each time phase re-enters OVERDRIVE_WARNING            */
+/* (same pattern as flashA/flashB above — RESEARCH.md Padrão 8).               */
+@keyframes overdrivePulse {
+  0%, 100% {
+    box-shadow: inset 0 0 0 0 rgba(255, 0, 128, 0.0);
+    border-color: rgba(255, 0, 128, 0.4);
+  }
+  50% {
+    box-shadow: inset 0 0 40px 8px rgba(255, 0, 128, 0.3);
+    border-color: rgba(255, 0, 128, 0.9);
+  }
+}
+
+/* CRITICAL: pointer-events must be none — DEFENDER button must be clickable   */
+/* even while overlay is above it visually (RESEARCH.md Pitfall 4).            */
+.overdriveOverlayA {
+  position: absolute;
+  inset: 0;
+  border: 3px solid rgba(255, 0, 128, 0.6);
+  animation: overdrivePulse 800ms ease-in-out infinite;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.overdriveOverlayB {
+  /* Identical to overdriveOverlayA — class name difference forces DOM diff.   */
+  position: absolute;
+  inset: 0;
+  border: 3px solid rgba(255, 0, 128, 0.6);
+  animation: overdrivePulse 800ms ease-in-out infinite;
+  pointer-events: none;
+  z-index: 25;
+}
+
+/* Shared overlay class (used alongside A/B variant) */
+.overdriveOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* TERMINUS warning text — centered overlay text (OVERDRIVE-02) */
+.overdriveText {
+  color: #ff0080;
+  font-size: 16px;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(255, 0, 128, 0.8);
+  font-family: var(--font-pixel), monospace;
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.overdriveSubText {
+  color: #ff8080;
+  font-size: 8px;
+  text-align: center;
+  font-family: var(--font-pixel), monospace;
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ── DEFENDER button glow during OVERDRIVE_WARNING (OVERDRIVE-03) ─────────── */
+/* Cyan pulsing box-shadow on the DEFENDER button when isOverdrivePhase=true.  */
+/* Uses same GPU-composited box-shadow pattern as shieldPulse (VISUAL-07).     */
+@keyframes defenderGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.6); }
+  50%       { box-shadow: 0 0 8px 4px rgba(0, 255, 255, 0); }
+}
+
+.defenderOverdriveGlow {
+  animation: defenderGlow 600ms ease-in-out infinite;
+  border-color: var(--color-cyan-neon) !important;
+}

@@ -134,6 +134,7 @@ export const AI_BEHAVIORS: Record<EnemyBehaviorType, AIFn> = {
   },
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function stubAction(enemy: Enemy, state: BattleState, label: string): ResolvedAction {
   // WR-03: return no-op instead of throwing when no valid targets exist
   // GAME_OVER should have fired before reaching here, but guard defensively
