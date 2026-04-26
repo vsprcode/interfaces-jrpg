@@ -72,8 +72,8 @@ Plans:
 - [x] 03-02-PLAN.md — Wave 1: Forge Wall (TORC) + System Override (TRINETRA) skills + status lifecycle [TDD]
 - [x] 03-03-PLAN.md — Wave 1: TARGET_LOWEST_HP + ATTACK_RANDOM AI behaviors [TDD]
 - [x] 03-04-PLAN.md — Wave 2: GameController + EncounterCompleteScreen + BattleScene parameterization
-- [ ] 03-05-PLAN.md — Wave 3: Status badges in CharacterHUD + TurnOrderIndicator
-- [ ] 03-06-PLAN.md — Wave 3: TRINETRA target picker in ActionMenu + DialogueBox component
+- [x] 03-05-PLAN.md — Wave 3: Status badges in CharacterHUD + TurnOrderIndicator
+- [x] 03-06-PLAN.md — Wave 3: TRINETRA target picker in ActionMenu + DialogueBox component
 - [ ] 03-07-PLAN.md — Wave 4: Camera shake + SKILL effects + human verify checkpoint
 **UI hint**: yes
 
