@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer, useEffect, useRef, useState } from 'react';
+import React, { useReducer, useEffect, useRef, useState } from 'react';
 import { battleReducer, initialBattleState } from '@/engine/reducer';
 import { useGameStateRef } from '@/engine/gameStateRef';
 import { DEADZONE } from '@/data/characters';

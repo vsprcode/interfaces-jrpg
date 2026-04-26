@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import React, { type CSSProperties } from 'react';
 import styles from '@/styles/sprite-fallback.module.css';
 import type { CombatantId } from '@/engine/types';
 

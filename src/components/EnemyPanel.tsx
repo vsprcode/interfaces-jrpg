@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import type { Enemy } from '@/engine/types';
 import { SpriteFallback } from '@/components/SpriteFallback';
 import styles from '@/styles/battle.module.css';
