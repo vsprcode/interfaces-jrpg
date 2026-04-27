@@ -108,12 +108,12 @@
 }
 
 .flashA {
-  animation: flash 200ms ease-in-out;
+  animation: flash 200ms ease-in-out forwards;
   pointer-events: none;
 }
 
 .flashB {
-  animation: flash 200ms ease-in-out;
+  animation: flash 200ms ease-in-out forwards;
   pointer-events: none;
 }
 
