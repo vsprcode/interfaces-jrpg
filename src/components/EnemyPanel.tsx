@@ -3,6 +3,7 @@
 import React from 'react';
 import type { Enemy } from '@/engine/types';
 import { SpriteFallback } from '@/components/SpriteFallback';
+import { CharacterSprite, hasSprite } from '@/components/CharacterSprite';
 import styles from '@/styles/battle.module.css';
 
 interface EnemyPanelProps {
@@ -44,7 +45,11 @@ export function EnemyPanel({ enemy }: EnemyPanelProps) {
           .join(' ')}
         aria-label={enemy.isDefeated ? `${enemy.name} derrotada` : enemy.name}
       >
-        <SpriteFallback combatantId={enemy.id} kind="enemy" />
+        {hasSprite(enemy.id) ? (
+          <CharacterSprite characterId={enemy.id} state="idle" kind="boss" />
+        ) : (
+          <SpriteFallback combatantId={enemy.id} kind="enemy" />
+        )}
         {enemy.isDefeated && (
           <span
             style={{

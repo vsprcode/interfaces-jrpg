@@ -1,0 +1,67 @@
+/* character-sprite.module.css
+ * Pixel-art sprite rendering for player characters and AEGIS-7 boss.
+ * Each sprite is extracted from a 48×64px grid; displayed at 2× (player) or 3× (boss).
+ * Attack strip: two 48×64 frames side-by-side → 96×64 PNG, animated via steps(2).
+ * image-rendering: pixelated preserves crisp pixel art edges at any scale.
+ */
+
+/* ── Player sprites (2× scale: 48×64 → 96×128) ──────────────────────────── */
+
+.idlePlayer {
+  display: block;
+  width: 96px;
+  height: 128px;
+  image-rendering: pixelated;
+  /* CSS transitions for hurt/defend filter changes (driven by data-state in BattleScene) */
+  transition: filter 80ms ease-out;
+}
+
+.attackPlayer {
+  width: 96px;
+  height: 128px;
+  image-rendering: pixelated;
+  background-size: 192px 128px; /* strip at 2×: 96×64px actual → 192×128px display */
+  background-repeat: no-repeat;
+  animation: attackCyclePlayer 360ms steps(2) infinite;
+}
+
+/* ── Boss sprite (3× scale: 48×64 → 144×192) ─────────────────────────────── */
+
+.idleBoss {
+  display: block;
+  width: 144px;
+  height: 192px;
+  image-rendering: pixelated;
+  transition: filter 80ms ease-out;
+}
+
+.attackBoss {
+  width: 144px;
+  height: 192px;
+  image-rendering: pixelated;
+  background-size: 288px 192px; /* strip at 3×: 96×64px actual → 288×192px display */
+  background-repeat: no-repeat;
+  animation: attackCycleBoss 360ms steps(2) infinite;
+}
+
+/* Attack keyframes — steps(2) snaps between frame 0 and frame 1.
+ * Player (2×): each frame is 96px wide at display scale.
+ * Boss   (3×): each frame is 144px wide at display scale.
+ */
+@keyframes attackCyclePlayer {
+  from { background-position: 0 0; }
+  to   { background-position: -96px 0; }
+}
+
+@keyframes attackCycleBoss {
+  from { background-position: 0 0; }
+  to   { background-position: -144px 0; }
+}
+
+/* ── State-driven CSS filters ─────────────────────────────────────────────── */
+/* Applied inline via the `state` prop; mirrors the data-state selectors in   */
+/* battle.module.css but scoped to CharacterSprite so they always fire.        */
+
+.hurtFilter  { filter: brightness(3) saturate(0.2); }
+.defendFilter { filter: saturate(0.35) brightness(0.75); }
+.skillFilter  { filter: hue-rotate(50deg) brightness(1.4); }

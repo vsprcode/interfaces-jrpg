@@ -9,6 +9,7 @@ import { EnemyPanel } from '@/components/EnemyPanel';
 import { BattleLog } from '@/components/BattleLog';
 import { FloatingDamageNumber } from '@/components/FloatingDamageNumber';
 import { SpriteFallback } from '@/components/SpriteFallback';
+import { CharacterSprite, hasSprite } from '@/components/CharacterSprite';
 import { GameOverScreen } from '@/components/GameOverScreen';
 import { TurnOrderIndicator } from '@/components/TurnOrderIndicator';
 import type { Character, Enemy, CombatantId } from '@/engine/types';
@@ -364,7 +365,14 @@ export function BattleScene({ party, enemies, encounterIndex, onVictory, onGameO
                 data-state={getSpriteState(character.id)}
                 style={{ opacity: character.isDefending ? 0.8 : 1 }}
               >
-                <SpriteFallback combatantId={character.id} kind="player" />
+                {hasSprite(character.id) ? (
+                  <CharacterSprite
+                    characterId={character.id}
+                    state={getSpriteState(character.id)}
+                  />
+                ) : (
+                  <SpriteFallback combatantId={character.id} kind="player" />
+                )}
               </div>
               {/* Floating damage/heal numbers on each party member */}
               <div className="relative">
